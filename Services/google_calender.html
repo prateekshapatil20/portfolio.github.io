@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Google Calender Case Studies</title>
+    <link rel="stylesheet" href="/style.css" />
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true });
+    </script>
+</head>
+
+<body>
+    <header>
+        <a href="#" class="logo">Portfolio</a>
+        <nav>
+            <ul>
+                <li><a href="/index.html">Home</a></li>
+                <li><a href="/index.html#about">About</a></li>
+                <li><a href="/index.html#education">Education</a></li>
+                <li><a href="/index.html#skills">Skills</a></li>
+                <li><a href="/index.html#projects">Projects</a></li>
+                <li><a href="/index.html#google">Google</a></li>
+                <li><a href="/index.html#contact">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
+    <section id="case-study" style="margin-top: 2rem;">
+        <h1>Case Studies for Google Calender</h1>
+        <h1>1. Meeting Scheduling Optimization</h1>
+
+        <h2>🔍 Business Problem:</h2>
+        <p>
+            Scheduling a meeting with multiple participants across different time zones involves evaluating many
+            possible orders and time slot permutations to minimize conflicts and maximize convenience.
+        </p>
+        <h2>🎯 Objective:</h2>
+  <p>Design a system to generate and evaluate all possible participant orderings and time slot permutations to find the meeting schedule that minimizes conflicts and maximizes convenience.</p>
+
+        <h2>1.1 Johnson-Trotter Algorithm</h2>
+        <p>
+            Efficiently generate all permutations of participant meeting times to identify the optimal scheduling order
+            with minimal conflicts and highest participant availability.
+        </p>
+
+        <h2>⚙️ Algorithm Workflow</h2>
+        <pre class="mermaid">
+flowchart TD
+    A[Participants' Available Time Slots] --> B[Generate All Permutations - Johnson-Trotter]
+    B --> C[Evaluate Each Permutation for Conflicts]
+    C --> D[Calculate Overall Convenience Score]
+    D --> E[Select Permutation with Highest Score]
+    E --> F[Schedule Meeting]
+</pre>
+
+
+        <h2>💻 Code</h2>
+        <pre><code class="language-cpp">
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+using namespace std;
+
+void printPermutation(const vector&lt;int&gt;& perm) {
+    for (int x : perm) cout &lt;&lt; x &lt;&lt; " ";
+    cout &lt;&lt; endl;
+}
+
+// Get the largest mobile integer's index
+int getLargestMobile(const vector&lt;int&gt;& perm, const vector&lt;int&gt;& dir) {
+    int largestMobileIndex = -1;
+    int largestMobile = -1;
+    for (int i = 0; i &lt; perm.size(); ++i) {
+        int nextIndex = i + dir[i];
+        if (nextIndex >= 0 && nextIndex &lt; perm.size() && perm[i] &gt; perm[nextIndex] &amp;&amp; perm[i] &gt; largestMobile) {
+            largestMobile = perm[i];
+            largestMobileIndex = i;
+        }
+    }
+    return largestMobileIndex;
+}
+
+void johnsonTrotter(int n) {
+    vector&lt;int&gt; perm(n);
+    vector&lt;int&gt; dir(n, -1);  // -1 for left, +1 for right
+
+    for (int i = 0; i &lt; n; ++i) perm[i] = i + 1;
+
+    printPermutation(perm);
+
+    while (true) {
+        int largestMobileIndex = getLargestMobile(perm, dir);
+        if (largestMobileIndex == -1) break;
+
+        int swapIndex = largestMobileIndex + dir[largestMobileIndex];
+        swap(perm[largestMobileIndex], perm[swapIndex]);
+        swap(dir[largestMobileIndex], dir[swapIndex]);
+        largestMobileIndex = swapIndex;
+
+        for (int i = 0; i &lt; n; ++i) {
+            if (perm[i] &gt; perm[largestMobileIndex]) {
+                dir[i] = -dir[i];
+            }
+        }
+
+        printPermutation(perm);
+    }
+}
+
+int main() {
+    int n = 4; // Number of participants/time slots
+    cout &lt;&lt; "All permutations of meeting orders:\n";
+    johnsonTrotter(n);
+    return 0;
+}
+  </code></pre>
+        <h2>📈 Time &amp; Space Complexity</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Operation</th>
+                    <th>Time Complexity</th>
+                    <th>Space Complexity</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Generate Permutations</td>
+                    <td>O(n × n!)</td>
+                    <td>O(n)</td>
+                </tr>
+            </tbody>
+        </table>
+        <p><small><strong>Note:</strong> In the time complexity, <strong>n</strong> represents the number of
+                participants or time slots being permuted for meeting scheduling.</small></p>
+            <h2>Inferences</h2>
+  <p>The Johnson-Trotter algorithm efficiently produces all permutations, enabling exhaustive yet optimized exploration of scheduling options. This approach ensures finding the best arrangement for participant availability with manageable computational effort for small to medium-sized groups.</p>
+
+    </section>
+    <section id="case-study" style="margin-top: 2rem;">
+        <h1>2. Smart Event Suggestions in Google Calendar</h1>
+
+        <h2>🔍 Business Problem:</h2>
+        <p>Google Calendar aims to suggest optimal time slots for new events based on participants' existing schedules,
+            avoiding conflicts and respecting time preferences.</p>
+
+        <h2>🎯 Objective:</h2>
+        <p>Automatically recommend the best N available time slots by checking for overlaps across multiple users’
+            calendar events.</p>
+
+        <h2>2.1 Interval Tree</h2>
+        <p>Interval Trees enable efficient overlap detection between proposed time slots and existing events, ideal for
+            large-scale multi-user calendar systems.</p>
+
+        <h2>⚙️ Algorithm Workflow</h2>
+        <pre class="mermaid">
+flowchart TD
+    A[User Calendar Events as Intervals] --> B[Build Interval Trees Per User]
+    B --> C[Input Proposed Time Ranges]
+    C --> D[Query Interval Trees for Overlaps]
+    D --> E[Rank Free Slots by Overlap and Preference]
+    E --> F[Suggest Top-N Available Time Slots]
+</pre>
+
+        <h2>💻 Code</h2>
+        <pre><code class="language-cpp">
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+using namespace std;
+
+struct Interval {
+    int start, end;
+};
+
+struct Node {
+    Interval i;
+    int maxEnd;
+    Node *left, *right;
+
+    Node(Interval interval) : i(interval), maxEnd(interval.end), left(nullptr), right(nullptr) {}
+};
+
+Node* insert(Node* root, Interval i) {
+    if (!root) return new Node(i);
+
+    if (i.start &lt; root-&gt;i.start)
+        root-&gt;left = insert(root-&gt;left, i);
+    else
+        root-&gt;right = insert(root-&gt;right, i);
+
+    root-&gt;maxEnd = max(root-&gt;maxEnd, i.end);
+    return root;
+}
+
+bool overlap(Interval a, Interval b) {
+    return a.start &lt; b.end &amp;&amp; b.start &lt; a.end;
+}
+
+bool hasOverlap(Node* root, Interval i) {
+    if (!root) return false;
+    if (overlap(root-&gt;i, i)) return true;
+    if (root-&gt;left &amp;&amp; root-&gt;left-&gt;maxEnd &gt;= i.start)
+        return hasOverlap(root-&gt;left, i);
+    return hasOverlap(root-&gt;right, i);
+}
+
+int main() {
+    vector&lt;Interval&gt; events = {{1, 3}, {5, 8}, {10, 15}};
+    Node* root = nullptr;
+    for (auto ev : events)
+        root = insert(root, ev);
+
+    Interval newEvent = {4, 6};
+    cout &lt;&lt; (hasOverlap(root, newEvent) ? "Conflict" : "No Conflict") &lt;&lt; endl;
+
+    return 0;
+}
+</code></pre>
+
+        <h2>📈 Time &amp; Space Complexity</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Operation</th>
+                    <th>Time Complexity</th>
+                    <th>Space Complexity</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Build Tree</td>
+                    <td>O(n log n)</td>
+                    <td>O(n)</td>
+                </tr>
+                <tr>
+                    <td>Insert Interval</td>
+                    <td>O(log n)</td>
+                    <td>O(log n)</td>
+                </tr>
+                <tr>
+                    <td>Overlap Query</td>
+                    <td>O(log n)</td>
+                    <td>O(log n)</td>
+                </tr>
+            </tbody>
+        </table>
+        <p><small><strong>Legend:</strong> n = number of events across calendars</small></p>
+        <h2>Inferences</h2>
+  <p>The Interval Tree allows efficient querying of overlapping time intervals, enabling fast detection of free time slots across multiple participants. This data structure optimizes the search for conflict-free event scheduling, improving recommendation speed and accuracy.</p>
+        <h2>
+            <a href="/Services/references.html" style="text-decoration: none; color: inherit;">
+                Click here for References
+            </a>
+        </h2>
+    </section>
+</body>
+
+</html>

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Google Assistant Case Studies</title>
+    <link rel="stylesheet" href="/style.css" />
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true });
+    </script>
+</head>
+
+<body>
+    <header>
+        <a href="#" class="logo">Portfolio</a>
+        <nav>
+            <ul>
+                <li><a href="/index.html">Home</a></li>
+                <li><a href="/index.html#about">About</a></li>
+                <li><a href="/index.html#education">Education</a></li>
+                <li><a href="/index.html#skills">Skills</a></li>
+                <li><a href="/index.html#projects">Projects</a></li>
+                <li><a href="/index.html#google">Google</a></li>
+                <li><a href="/index.html#contact">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <section id="case-study" style="margin-top: 2rem;">
+        <h1>Case Studies for Google Assistant</h1>
+        <h1>1. Multi-Command Queueing</h1>
+
+        <h2>🔍 Business Problem:</h2>
+        <p>Google Assistant users often issue multiple commands in quick succession. The assistant needs to queue and
+            execute them in order without missing or misinterpreting any command.</p>
+            <h2>🎯 Objective:</h2>
+<p>Design a command processing system that captures, stores, and executes multiple voice commands sequentially to maintain execution order and ensure reliable user interactions.</p>
+
+        <h2>1.1 Queue</h2>
+        <p>A queue ensures First-In-First-Out (FIFO) processing, making it ideal
+            for sequential task execution like handling multiple voice commands.</p>
+        <img src="https://miro.medium.com/v2/resize:fit:1400/1*lbVhTEoFe6OKb8Xf83QSeg.gif" jsaction=""
+            class="sFlh5c FyHeAf iPVvYb" style="max-width: 2280px; height: 171; margin: 0px; width: 305;"
+            alt="Data Structures and algorithms: Stacks and Queues | by Sudha Chandran B C |  Medium" jsname="kn3ccd">
+        <h2>⚙️ Algorithm Workflow</h2>
+        <pre class="mermaid">
+flowchart TD
+    A[User Issues Multiple Commands] --> B[Enqueue Each Command in Order]
+    B --> C[Command Queue]
+    C --> D[Process Commands One-by-One]
+    D --> E[Send Response to User]
+  </pre>
+
+        <h2>💻 Code</h2>
+        <pre><code class="language-python">
+from collections import deque
+
+class AssistantCommandQueue:
+    def __init__(self):
+        self.queue = deque()
+
+    def add_command(self, command):
+        self.queue.append(command)
+        print(f"Enqueued: {command}")
+
+    def process_commands(self):
+        while self.queue:
+            current = self.queue.popleft()
+            print(f"Processing: {current}")
+
+# Example
+assistant = AssistantCommandQueue()
+assistant.add_command("Turn on the lights")
+assistant.add_command("Play music")
+assistant.add_command("Set an alarm for 7 AM")
+
+assistant.process_commands()
+  </code></pre>
+
+        <h2>📈 Time &amp; Space Complexity</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Operation</th>
+                    <th>Time Complexity</th>
+                    <th>Space Complexity</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Enqueue Command</td>
+                    <td>O(1)</td>
+                    <td>O(n)</td>
+                </tr>
+                <tr>
+                    <td>Dequeue &amp; Process</td>
+                    <td>O(1)</td>
+                    <td>O(n)</td>
+                </tr>
+            </tbody>
+        </table>
+        <p><small><strong>Legend:</strong> n = number of queued commands.</small></p>
+        <h2>Inferences</h2>
+  <p>Using a queue ensures that Google Assistant processes commands in the exact order they were received, preserving context and preventing misexecution during multi-command interactions.</p>
+    </section>
+    <section id="case-study" style="margin-top: 2rem;">
+  <h1>2. Context-Aware Multi-Turn Conversation</h1>
+
+  <h2>🔍 Business Problem</h2>
+  <p>
+    Google Assistant must handle multi-turn conversations where user input guides dialogue through branching paths, such as reminders, queries, and follow-ups.
+    Efficiently managing these states ensures fluid and responsive interaction.
+  </p>
+  <h2>🎯 Objective:</h2>
+<p>Implement a state management system that tracks conversation context across multiple turns, enabling Google Assistant to deliver accurate, coherent responses based on user history and intent.</p>
+
+  <h2>2.1 Directed Acyclic Graph (DAG)</h2>
+  <p>
+    Each dialogue state is represented as a node in a DAG, with directed edges representing valid user transitions. DAGs support branching without cycles,
+    enabling context tracking and backtracking efficiently.
+  </p>
+  <img src="/images/dag.png" alt="Directed Acyclic Graphs" height="500" width="400">
+
+  <h2>⚙️ Algorithm Workflow</h2>
+  <pre class="mermaid">
+flowchart TD
+    A[Start: Set a reminder] --> B[Ask What time?]
+    B --> C[Ask What date?]
+    C --> D[Confirm Reminder]
+    D --> E[Save & Exit]
+    B --> F[User says Tomorrow 8AM]
+    F --> D
+  </pre>
+
+  <h2>💻 Code</h2>
+  <pre><code class="language-cpp">
+#include &lt;iostream&gt;
+#include &lt;unordered_map&gt;
+#include &lt;vector&gt;
+using namespace std;
+
+class DialogState {
+public:
+    string prompt;
+    vector&lt;string&gt; nextStates;
+
+    DialogState(string p) : prompt(p) {}
+};
+
+unordered_map&lt;string, DialogState&gt; dialogue;
+
+void initDialogDAG() {
+    dialogue["start"] = DialogState("Set a reminder.");
+    dialogue["start"].nextStates = {"ask_time"};
+
+    dialogue["ask_time"] = DialogState("What time?");
+    dialogue["ask_time"].nextStates = {"ask_date", "confirm"};
+
+    dialogue["ask_date"] = DialogState("What date?");
+    dialogue["ask_date"].nextStates = {"confirm"};
+
+    dialogue["confirm"] = DialogState("Confirm reminder?");
+    dialogue["confirm"].nextStates = {"exit"};
+
+    dialogue["exit"] = DialogState("Reminder saved.");
+}
+
+int main() {
+    initDialogDAG();
+    string state = "start";
+    while (state != "exit") {
+        cout &lt;&lt; dialogue[state].prompt &lt;&lt; endl;
+        if (!dialogue[state].nextStates.empty())
+            state = dialogue[state].nextStates[0]; // simulate one path
+        else
+            break;
+    }
+    return 0;
+}
+  </code></pre>
+
+  <h2>📈 Time & Space Complexity</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Operation</th>
+        <th>Time Complexity</th>
+        <th>Space Complexity</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>State Transition Lookup</td>
+        <td>O(1)</td>
+        <td>O(n + e)</td>
+      </tr>
+      <tr>
+        <td>Add New Transition</td>
+        <td>O(1)</td>
+        <td>O(1)</td>
+      </tr>
+      <tr>
+        <td>Traversal</td>
+        <td>O(n + e)</td>
+        <td>O(n)</td>
+      </tr>
+    </tbody>
+  </table>
+  <p><small><strong>Legend:</strong> n = number of dialogue states, e = transitions</small></p>
+  <h2>Inferences</h2>
+<p>
+Modeling multi-turn conversations as a Directed Acyclic Graph allows Google Assistant to manage context-aware dialogue paths efficiently.  
+It ensures logical flow, supports backtracking, and scales well with increasing interaction complexity.
+</p>
+   <h2>
+            <a href="/Services/references.html" style="text-decoration: none; color: inherit;">
+                Click here for References
+            </a>
+        </h2>
+</section>
+
+</body>
+
+</html>

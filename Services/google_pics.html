@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Google Photos Case Studies</title>
+    <link rel="stylesheet" href="/style.css" />
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true });
+    </script>
+</head>
+
+<body>
+    <header>
+        <a href="#" class="logo">Portfolio</a>
+        <nav>
+            <ul>
+                <li><a href="/index.html">Home</a></li>
+                <li><a href="/index.html#about">About</a></li>
+                <li><a href="/index.html#education">Education</a></li>
+                <li><a href="/index.html#skills">Skills</a></li>
+                <li><a href="/index.html#projects">Projects</a></li>
+                <li><a href="/index.html#google">Google</a></li>
+                <li><a href="/index.html#contact">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
+    <section id="case-study" style="margin-top: 2rem;">
+        <h1>Case Studies for Google Photos</h1>
+        <h2>1. Google Photos Duplicate Detection</h2>
+
+        <h2>🔍 Business Problem:</h2>
+        <p>Google Photos needs to efficiently detect duplicate or visually similar images in a user’s library to save
+            storage and improve user experience.</p>
+
+  <h2>🎯 Objective:</h2>
+  <p>Design an algorithm that quickly identifies duplicate or near-duplicate images by comparing image features or hashes to optimize storage and organization.</p>
+
+        <h2>1.1 Perceptual Hashing</h2>
+        <p>Hashing enables fast and efficient comparison of large image data by converting images into compact, easily
+            comparable representations.</p>
+        <h2>💻 Code</h2>
+        <pre><code class="language-cpp">
+    #include &lt;iostream&gt;
+    #include &lt;opencv2/opencv.hpp&gt;
+    
+    using namespace std;
+    using namespace cv;
+    
+    uint64_t averageHash(const Mat&amp; img) {
+        Mat resized, gray;
+        resize(img, resized, Size(8, 8));
+        cvtColor(resized, gray, COLOR_BGR2GRAY);
+    
+        double avg = mean(gray)[0];
+        uint64_t hash = 0;
+        for (int i = 0; i &lt; 64; i++) {
+            int r = i / 8, c = i % 8;
+            hash &lt;&lt;= 1;
+            if (gray.at&lt;uchar&gt;(r, c) &gt;= avg)
+                hash |= 1;
+        }
+        return hash;
+    }
+    
+    int hammingDistance(uint64_t hash1, uint64_t hash2) {
+        uint64_t x = hash1 ^ hash2;
+        int dist = 0;
+        while (x) {
+            dist += x &amp; 1;
+            x &gt;&gt;= 1;
+        }
+        return dist;
+    }
+    
+    int main() {
+        Mat img1 = imread("photo1.jpg");
+        Mat img2 = imread("photo2.jpg");
+    
+        if (img1.empty() || img2.empty()) {
+            cout &lt;&lt; "Error loading images!" &lt;&lt; endl;
+            return -1;
+        }
+    
+        uint64_t hash1 = averageHash(img1);
+        uint64_t hash2 = averageHash(img2);
+    
+        cout &lt;&lt; "Hash1: " &lt;&lt; hex &lt;&lt; hash1 &lt;&lt; endl;
+        cout &lt;&lt; "Hash2: " &lt;&lt; hex &lt;&lt; hash2 &lt;&lt; endl;
+    
+        int dist = hammingDistance(hash1, hash2);
+        cout &lt;&lt; "Hamming Distance: " &lt;&lt; dist &lt;&lt; endl;
+    
+        if (dist &lt;= 5)
+            cout &lt;&lt; "Images are duplicates or very similar." &lt;&lt; endl;
+        else
+            cout &lt;&lt; "Images are different." &lt;&lt; endl;
+    
+        return 0;
+    }
+      </code></pre>
+
+        <h2>📈 Time &amp; Space Complexity</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Operation</th>
+                    <th>Time Complexity</th>
+                    <th>Space Complexity</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Compute Hash</td>
+                    <td>O(1)</td>
+                    <td>O(1)</td>
+                </tr>
+                <tr>
+                    <td>Compare Hashes (Hamming Distance)</td>
+                    <td>O(1)</td>
+                    <td>O(1)</td>
+                </tr>
+                <tr>
+                    <td>Store Hash Index</td>
+                    <td>O(n)</td>
+                    <td>O(n)</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p><small><strong>Note:</strong> n = number of stored images.</small></p>
+        <h2>Inferences:</h2>
+<p>Perceptual Hashing enables fast and efficient identification of visually similar images by generating compact representations, making it ideal for large-scale duplicate detection in photo libraries.</p>
+
+    </section>
+    <section id="case-study" style="margin-top: 2rem;">
+        <h1>2. Album Autogrouping</h1>
+
+        <h2>🔍 Business Problem:</h2>
+        <p>
+            Automatically group photos in a user's album based on visual similarity, location, or metadata by treating
+            each photo as a node and similarity as edges.
+        </p>
+
+        <h2>🎯 Objective:</h2>
+        <p>
+            Identify clusters of related photos efficiently to create meaningful album groups for better user experience
+            and easier photo management.
+        </p>
+        <h2>2.1 DFS</h2>
+        <p>DFS is used here to efficiently explore and identify connected clusters of similar photos in the graph for
+            automatic album grouping.</p>
+        <img alt="" class="bh lr oa c" width="440" height="440" loading="eager" role="presentation"
+            src="https://miro.medium.com/v2/resize:fit:550/1*OD3ollwIzXE9orkT3gjMuw.gif">
+        <h2>💻 Code</h2>
+        <pre><code class="language-cpp">
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+using namespace std;
+
+void dfs(int node, const vector&lt;vector&lt;int&gt;&gt;&amp; graph, vector&lt;bool&gt;&amp; visited, vector&lt;int&gt;&amp; cluster) {
+    visited[node] = true;
+    cluster.push_back(node);
+    for (int neighbor : graph[node]) {
+        if (!visited[neighbor]) {
+            dfs(neighbor, graph, visited, cluster);
+        }
+    }
+}
+
+int main() {
+    int n = 8; // number of photos
+    // Adjacency list of similarity graph (undirected)
+    vector&lt;vector&lt;int&gt;&gt; graph(n);
+    
+    // Example edges between similar photos (0-based indices)
+    graph[0] = {1, 2};
+    graph[1] = {0, 2};
+    graph[2] = {0, 1};
+    graph[3] = {4};
+    graph[4] = {3};
+    graph[5] = {6};
+    graph[6] = {5};
+    graph[7] = {};  // isolated photo
+
+    vector&lt;bool&gt; visited(n, false);
+    vector&lt;vector&lt;int&gt;&gt; clusters;
+
+    for (int i = 0; i &lt; n; ++i) {
+        if (!visited[i]) {
+            vector&lt;int&gt; cluster;
+            dfs(i, graph, visited, cluster);
+            clusters.push_back(cluster);
+        }
+    }
+
+    cout &lt;&lt; "Photo Clusters (Albums):\n";
+    for (int i = 0; i &lt; clusters.size(); ++i) {
+        cout &lt;&lt; "Cluster " &lt;&lt; i + 1 &lt;&lt; ": ";
+        for (int photo : clusters[i]) cout &lt;&lt; photo &lt;&lt; " ";
+        cout &lt;&lt; endl;
+    }
+
+    return 0;
+}
+  </code></pre>
+
+        <h2>📈 Time &amp; Space Complexity</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Operation</th>
+                    <th>Time Complexity</th>
+                    <th>Space Complexity</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Build Graph</td>
+                    <td>O(E)</td>
+                    <td>O(V + E)</td>
+                </tr>
+                <tr>
+                    <td>DFS Traversal</td>
+                    <td>O(V + E)</td>
+                    <td>O(V)</td>
+                </tr>
+                <tr>
+                    <td>Store Clusters</td>
+                    <td>O(V)</td>
+                    <td>O(V)</td>
+                </tr>
+            </tbody>
+        </table>
+        <h2>Inferences:</h2>
+<p>DFS efficiently explores connected components in the photo similarity graph, enabling effective clustering of related photos to create meaningful album groups for enhanced organization.</p>
+
+        <h2>
+            <a href="/Services/references.html" style="text-decoration: none; color: inherit;">
+                Click here for References
+            </a>
+        </h2>
+    </section>
+
+
+</body>
+
+</html>

@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Youtube Case Studies</title>
+    <link rel="stylesheet" href="/style.css" />
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true });
+    </script>
+</head>
+
+<body>
+    <header>
+        <a href="#" class="logo">Portfolio</a>
+        <nav>
+            <ul>
+                <li><a href="/index.html">Home</a></li>
+                <li><a href="/index.html#about">About</a></li>
+                <li><a href="/index.html#education">Education</a></li>
+                <li><a href="/index.html#skills">Skills</a></li>
+                <li><a href="/index.html#projects">Projects</a></li>
+                <li><a href="/index.html#google">Google</a></li>
+                <li><a href="/index.html#contact">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
+    <section id="case-study" style="margin-top: 2rem;">
+        <h1>Case Studies for Youtube</h1>
+        <h1>1. Ad Insertion Optimization in YouTube</h1>
+
+        <h2>🔍 Business Problem:</h2>
+        <p>YouTube wants to insert ads into videos at optimal times where user engagement is high but without disrupting
+            user experience.</p>
+        <h2>🎯 Objective:</h2>
+<p>Identify high-engagement segments within videos to insert ads using data-driven techniques, maximizing revenue while preserving user experience and minimizing viewer drop-off.</p>
+
+        <h2>1.1 Segment Trees</h2>
+        <p>Segment Trees are ideal for efficiently identifying high engagement periods in large video timelines,
+            enabling fast range maximum queries. They also allow quick updates when user engagement data changes
+            dynamically, making them perfect for real-time ad placement decisions.</p>
+        <img src="/images/segment tree.jpg" alt="segment tree">
+        <h2>💻 Code</h2>
+        <pre><code class="language-cpp">#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;algorithm&gt;
+using namespace std;
+
+class SegmentTree {
+    vector&lt;int&gt; tree;
+    vector&lt;int&gt; data;
+    int n;
+
+    void build(int node, int l, int r) {
+        if (l == r) {
+            tree[node] = data[l];
+        } else {
+            int mid = (l + r) / 2;
+            build(2*node, l, mid);
+            build(2*node+1, mid+1, r);
+            tree[node] = max(tree[2*node], tree[2*node+1]);
+        }
+    }
+
+    int query(int node, int l, int r, int ql, int qr) {
+        if (qr &lt; l || ql &gt; r) return -1;
+        if (ql &lt;= l &amp;&amp; r &lt;= qr) return tree[node];
+        int mid = (l + r) / 2;
+        return max(
+            query(2*node, l, mid, ql, qr),
+            query(2*node+1, mid+1, r, ql, qr)
+        );
+    }
+
+public:
+    SegmentTree(vector&lt;int&gt;&amp; engagement) {
+        data = engagement;
+        n = data.size();
+        tree.resize(4 * n);
+        build(1, 0, n - 1);
+    }
+
+    int getMaxEngagement(int l, int r) {
+        return query(1, 0, n - 1, l, r);
+    }
+};
+
+int main() {
+    vector&lt;int&gt; engagement = {5, 7, 6, 8, 9, 4, 3, 10, 6, 2};
+    SegmentTree segTree(engagement);
+
+    int start = 0, end = 9;
+    int maxEngagement = segTree.getMaxEngagement(start, end);
+
+    cout &lt;&lt; "Best time to insert ad (max engagement in interval 0-9): " &lt;&lt; maxEngagement &lt;&lt; endl;
+    return 0;
+}
+  </code></pre>
+
+        <h2>📈 Time &amp; Space Complexity</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Operation</th>
+                    <th>Time Complexity</th>
+                    <th>Space Complexity</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Build Tree</td>
+                    <td>O(n)</td>
+                    <td>O(n)</td>
+                </tr>
+                <tr>
+                    <td>Query Max</td>
+                    <td>O(log n)</td>
+                    <td>O(n)</td>
+                </tr>
+                <tr>
+                    <td>Update Value</td>
+                    <td>O(log n)</td>
+                    <td>O(n)</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p><small><strong>Legend:</strong> n = number of seconds (or engagement data points) in the video
+                timeline.</small></p>
+
+        <h2>1.2 Persistent Segment Tree</h2>
+        <p>Persistent Segment Tree enables efficient queries and updates on multiple historical versions of engagement
+            data without rebuilding from scratch.</p>
+        <img src="/images/persistent_segment_tree.png" alt="persistent_segment_tree">
+        <h2>⚙️ Algorithm Workflow</h2>
+        <pre class="mermaid">
+    flowchart TD
+        A[Initial Engagement Array] --> B[Build Version 0 of Segment Tree]
+        B --> C[Update at index i in version v]
+        C --> D[Create Version v+1 with path copied]
+        D --> E[New Root Points to Old Unchanged Nodes]
+        B --> F[Query Engagement from Version v]
+        F --> G[Find Best Insertion Time from Query Result]
+  </pre>
+
+        <h2>💻 Code</h2>
+        <pre><code class="language-cpp">
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+using namespace std;
+
+struct Node {
+    int val;
+    Node *left, *right;
+    Node(int v) : val(v), left(nullptr), right(nullptr) {}
+    Node(Node* l, Node* r) : left(l), right(r), val(0) {
+        if (l) val += l-&gt;val;
+        if (r) val += r-&gt;val;
+    }
+};
+
+Node* build(const vector&lt;int&gt;&amp; arr, int l, int r) {
+    if (l == r) return new Node(arr[l]);
+    int m = (l + r) / 2;
+    return new Node(build(arr, l, m), build(arr, m + 1, r));
+}
+
+Node* update(Node* node, int l, int r, int pos, int val) {
+    if (l == r) return new Node(val);
+    int m = (l + r) / 2;
+    if (pos &lt;= m)
+        return new Node(update(node-&gt;left, l, m, pos, val), node-&gt;right);
+    else
+        return new Node(node-&gt;left, update(node-&gt;right, m + 1, r, pos, val));
+}
+
+int query(Node* node, int l, int r, int ql, int qr) {
+    if (!node || qr &lt; l || ql &gt; r) return 0;
+    if (ql &lt;= l &amp;&amp; r &lt;= qr) return node-&gt;val;
+    int m = (l + r) / 2;
+    return query(node-&gt;left, l, m, ql, qr) + query(node-&gt;right, m + 1, r, ql, qr);
+}
+
+int main() {
+    vector&lt;int&gt; engagement = {5, 7, 6, 8, 9, 4, 3, 10, 6, 2};
+    int n = engagement.size();
+    Node* root0 = build(engagement, 0, n - 1);
+
+    // Create version 1 with update at index 3 (value 12)
+    Node* root1 = update(root0, 0, n - 1, 3, 12);
+
+    cout &lt;&lt; "Query [0,9] in original: " &lt;&lt; query(root0, 0, n - 1, 0, 9) &lt;&lt; endl;
+    cout &lt;&lt; "Query [0,9] in updated:  " &lt;&lt; query(root1, 0, n - 1, 0, 9) &lt;&lt; endl;
+
+    return 0;
+}
+  </code></pre>
+
+        <h2>📈 Time &amp; Space Complexity</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Operation</th>
+                    <th>Time Complexity</th>
+                    <th>Space Complexity</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Build Tree</td>
+                    <td>O(n)</td>
+                    <td>O(n)</td>
+                </tr>
+                <tr>
+                    <td>Update</td>
+                    <td>O(log n)</td>
+                    <td>O(log n) per version</td>
+                </tr>
+                <tr>
+                    <td>Range Query</td>
+                    <td>O(log n)</td>
+                    <td>O(log n)</td>
+                </tr>
+            </tbody>
+        </table>
+        <p><small><strong>Legend:</strong> Total Versions = O(v log n), where <em>v</em> = number of versions</small>
+        </p>
+
+        <h2>1.3 Fenwick Tree (Binary Indexed Tree)</h2>
+        <p>Fenwick Tree efficiently supports prefix sum queries and point updates on engagement data with logarithmic
+            complexity.</p>
+        <img alt="" class="bh fw qp c" width="700" height="315" loading="lazy" role="presentation"
+            src="https://miro.medium.com/v2/resize:fit:875/0*E9BYdnnPHkXVIiFK.gif">
+        <h2>💻 Code</h2>
+        <pre><code class="language-cpp">
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+using namespace std;
+
+class FenwickTree {
+    vector&lt;int&gt; bit;
+    int n;
+
+public:
+    FenwickTree(int size) {
+        n = size;
+        bit.assign(n + 1, 0);
+    }
+
+    void update(int index, int delta) {
+        for (++index; index &lt;= n; index += index &amp; -index)
+            bit[index] += delta;
+    }
+
+    int prefixSum(int index) {
+        int res = 0;
+        for (++index; index &gt; 0; index -= index &amp; -index)
+            res += bit[index];
+        return res;
+    }
+
+    int rangeSum(int l, int r) {
+        return prefixSum(r) - prefixSum(l - 1);
+    }
+};
+
+int main() {
+    vector&lt;int&gt; engagement = {5, 7, 6, 8, 9, 4, 3, 10, 6, 2};
+    FenwickTree ft(engagement.size());
+
+    for (int i = 0; i &lt; engagement.size(); ++i)
+        ft.update(i, engagement[i]);
+
+    int l = 0, r = 9;
+    cout &lt;&lt; "Engagement from " &lt;&lt; l &lt;&lt; " to " &lt;&lt; r &lt;&lt; ": " &lt;&lt; ft.rangeSum(l, r) &lt;&lt; endl;
+
+    return 0;
+}
+</code></pre>
+
+        <h2>📈 Time &amp; Space Complexity</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Operation</th>
+                    <th>Time Complexity</th>
+                    <th>Space Complexity</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Build Tree</td>
+                    <td>O(n log n)</td>
+                    <td>O(n)</td>
+                </tr>
+                <tr>
+                    <td>Point Update</td>
+                    <td>O(log n)</td>
+                    <td>O(n)</td>
+                </tr>
+                <tr>
+                    <td>Range Sum</td>
+                    <td>O(log n)</td>
+                    <td>O(n)</td>
+                </tr>
+            </tbody>
+        </table>
+        <h2>Inferences:</h2>
+<p>Segment trees efficiently detect high-engagement regions for precise ad placement. Persistent segment trees allow historical comparison for A/B testing, while Fenwick trees offer lightweight engagement aggregation for faster decisions.</p>
+
+
+    </section>
+    <section id="case-study" style="margin-top: 2rem;">
+        <h1>2. YouTube CDN Placement Optimization</h1>
+
+        <h2>🔍 Business Problem:</h2>
+        <p>YouTube wants to place CDN servers optimally across network nodes to minimize overall network cost and
+            latency while ensuring high availability and efficient content delivery.</p>
+            <h2>🎯 Objective:</h2>
+<p>Use graph-based optimization to determine the minimal-cost placement of CDN servers such that content delivery remains fast, reliable, and scalable across global user bases.</p>
+
+        <h2>2.1 Boruvka’s Algorithm for YouTube CDN Placement</h2>
+        <p>Boruvka’s Algorithm efficiently finds the Minimum Spanning Tree (MST) to minimize network costs by optimally
+            connecting CDN server locations.</p>
+        <img src="//upload.wikimedia.org/wikipedia/commons/thumb/2/2e/Boruvka%27s_algorithm_%28Sollin%27s_algorithm%29_Anim.gif/500px-Boruvka%27s_algorithm_%28Sollin%27s_algorithm%29_Anim.gif"
+            decoding="async" width="450" height="300" class="mw-file-element"
+            srcset="//upload.wikimedia.org/wikipedia/commons/thumb/2/2e/Boruvka%27s_algorithm_%28Sollin%27s_algorithm%29_Anim.gif/960px-Boruvka%27s_algorithm_%28Sollin%27s_algorithm%29_Anim.gif 1.5x"
+            data-file-width="1198" data-file-height="673">
+        <h2>💻 Code</h2>
+        <pre><code class="language-cpp">
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;algorithm&gt;
+using namespace std;
+
+struct Edge {
+    int u, v;
+    int weight;
+    Edge(int _u, int _v, int _w) : u(_u), v(_v), weight(_w) {}
+};
+
+struct DisjointSet {
+    vector&lt;int&gt; parent, rank;
+    DisjointSet(int n) {
+        parent.resize(n);
+        rank.resize(n, 0);
+        for (int i = 0; i &lt; n; ++i) parent[i] = i;
+    }
+    int find(int x) {
+        if (parent[x] != x) parent[x] = find(parent[x]);
+        return parent[x];
+    }
+    void unite(int x, int y) {
+        int rx = find(x), ry = find(y);
+        if (rx != ry) {
+            if (rank[rx] &lt; rank[ry]) parent[rx] = ry;
+            else if (rank[ry] &lt; rank[rx]) parent[ry] = rx;
+            else {
+                parent[ry] = rx;
+                rank[rx]++;
+            }
+        }
+    }
+};
+
+int boruvkaMST(int n, vector&lt;Edge&gt;&amp; edges) {
+    DisjointSet ds(n);
+    int numComponents = n;
+    int MSTweight = 0;
+
+    vector&lt;int&gt; cheapest(n, -1);
+
+    while (numComponents &gt; 1) {
+        for (int i = 0; i &lt; n; ++i) cheapest[i] = -1;
+
+        for (int i = 0; i &lt; (int)edges.size(); ++i) {
+            int u = edges[i].u;
+            int v = edges[i].v;
+            int w = edges[i].weight;
+
+            int setU = ds.find(u);
+            int setV = ds.find(v);
+
+            if (setU == setV) continue;
+
+            if (cheapest[setU] == -1 || edges[cheapest[setU]].weight &gt; w) {
+                cheapest[setU] = i;
+            }
+            if (cheapest[setV] == -1 || edges[cheapest[setV]].weight &gt; w) {
+                cheapest[setV] = i;
+            }
+        }
+
+        for (int i = 0; i &lt; n; ++i) {
+            if (cheapest[i] != -1) {
+                int u = edges[cheapest[i]].u;
+                int v = edges[cheapest[i]].v;
+                int w = edges[cheapest[i]].weight;
+
+                int setU = ds.find(u);
+                int setV = ds.find(v);
+
+                if (setU != setV) {
+                    ds.unite(setU, setV);
+                    MSTweight += w;
+                    numComponents--;
+                    cout &lt;&lt; "Added edge (" &lt;&lt; u &lt;&lt; ", " &lt;&lt; v &lt;&lt; ") with weight " &lt;&lt; w &lt;&lt; endl;
+                }
+            }
+        }
+    }
+    return MSTweight;
+}
+
+int main() {
+    int n = 6;
+    vector&lt;Edge&gt; edges = {
+        Edge(0, 1, 4),
+        Edge(0, 2, 3),
+        Edge(1, 2, 1),
+        Edge(1, 3, 2),
+        Edge(2, 3, 4),
+        Edge(3, 4, 2),
+        Edge(4, 5, 6)
+    };
+
+    int mstWeight = boruvkaMST(n, edges);
+    cout &lt;&lt; "Total MST weight (minimal network cost): " &lt;&lt; mstWeight &lt;&lt; endl;
+
+    return 0;
+}
+</code></pre>
+
+        <h2>📈 Time &amp; Space Complexity</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Operation</th>
+                    <th>Time Complexity</th>
+                    <th>Space Complexity</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Initialization</td>
+                    <td>O(n)</td>
+                    <td>O(n)</td>
+                </tr>
+                <tr>
+                    <td>Finding Cheapest Edges per Iteration</td>
+                    <td>O(E)</td>
+                    <td>O(n)</td>
+                </tr>
+                <tr>
+                    <td>Union-Find Operations</td>
+                    <td>O(log n)</td>
+                    <td>O(n)</td>
+                </tr>
+                <tr>
+                    <td>Total</td>
+                    <td>O(E log n)</td>
+                    <td>O(n)</td>
+                </tr>
+            </tbody>
+        </table>
+        <p><small><strong>Legend:</strong> n = number of nodes (servers), E = number of edges (network
+                connections)</small></p>
+                <h2>Inferences:</h2>
+<p>Boruvka’s Algorithm efficiently constructs a minimal spanning network, making it ideal for determining the optimal CDN server placement by minimizing total connection costs while ensuring full node coverage.</p>
+
+
+    </section>
+    <section id="case-study" style="margin-top: 2rem;">
+        <h1>3. Optimizing Video Highlights Extraction</h1>
+
+        <h2>🔍 Business Problem:</h2>
+        <p>
+            Automatically generate video highlights by finding continuous segments where engagement metrics are above
+            average.
+        </p>
+
+        <h2>🎯 Objective:</h2>
+        <p>
+            Identify the continuous time interval in a video with the highest cumulative user engagement to create
+            compelling highlights.
+        </p>
+
+        <h2>3.1 Kadane’s Algorithm</h2>
+        <p>
+            Kadane’s algorithm efficiently finds the maximum sum contiguous subarray, which helps detect the segment
+            with the highest overall engagement quickly.
+        </p>
+
+        <h2>⚙️ Algorithm Workflow</h2>
+        <pre class="mermaid">
+    flowchart TD
+      A[Engagement Data Array] --> B[Apply Kadane’s Algorithm]
+      B --> C[Find Max Sum Subarray]
+      C --> D[Highlight Video Segment]
+  </pre>
+
+        <h2>💻 Code</h2>
+        <pre><code class="language-cpp">
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+using namespace std;
+
+pair&lt;int,int&gt; kadane(const vector&lt;int&gt;&amp; engagement) {
+    int maxSum = engagement[0];
+    int currentSum = 0;
+    int start = 0, end = 0, tempStart = 0;
+
+    for (int i = 0; i &lt; engagement.size(); ++i) {
+        currentSum += engagement[i];
+        if (currentSum &gt; maxSum) {
+            maxSum = currentSum;
+            start = tempStart;
+            end = i;
+        }
+        if (currentSum &lt; 0) {
+            currentSum = 0;
+            tempStart = i + 1;
+        }
+    }
+    return {start, end};
+}
+
+int main() {
+    vector&lt;int&gt; engagement = {2, -1, 3, 5, -2, 4, -3, 2, 2};
+    auto result = kadane(engagement);
+
+    cout &lt;&lt; "Highlight segment from index " &lt;&lt; result.first &lt;&lt; " to " &lt;&lt; result.second &lt;&lt; endl;
+    return 0;
+}
+  </code></pre>
+
+        <h2>📈 Time &amp; Space Complexity</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Operation</th>
+                    <th>Time Complexity</th>
+                    <th>Space Complexity</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Kadane’s Algorithm</td>
+                    <td>O(n)</td>
+                    <td>O(1)</td>
+                </tr>
+            </tbody>
+        </table>
+        <h2>Inferences:</h2>
+<p>Kadane’s Algorithm is optimal for finding the maximum sum subarray, making it highly effective for detecting the most engaging continuous video segment for highlight generation in linear time.</p>
+
+        <h2>
+            <a href="/Services/references.html" style="text-decoration: none; color: inherit;">
+                Click here for References
+            </a>
+        </h2>
+    </section>
+
+</body>
+
+</html>

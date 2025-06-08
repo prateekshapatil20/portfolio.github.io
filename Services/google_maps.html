@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Google Maps Case Studies</title>
+  <link rel="stylesheet" href="/style.css" />
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({ startOnLoad: true });
+  </script>
+</head>
+
+<body>
+  <header>
+    <a href="#" class="logo">Portfolio</a>
+    <nav>
+      <ul>
+        <li><a href="/index.html">Home</a></li>
+        <li><a href="/index.html#about">About</a></li>
+        <li><a href="/index.html#education">Education</a></li>
+        <li><a href="/index.html#skills">Skills</a></li>
+        <li><a href="/index.html#projects">Projects</a></li>
+        <li><a href="/index.html#google">Google</a></li>
+        <li><a href="/index.html#contact">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+  <section id="case-study" style="margin-top: 2rem;">
+    <h1>Case Studies for Google Maps</h1>
+    <h1>1. Google Maps – Route Optimization</h1>
+
+    <h2>🔍 Business Problem:</h2>
+    <p>Users need the fastest route from their current location to a destination, considering road distances and
+      optionally traffic.</p>
+
+    <h2>🎯 Objective</h2>
+    <p>Design an algorithm that computes the shortest and fastest path between two points on a road network, minimizing
+      travel time or distance while efficiently handling dynamic factors like traffic conditions.
+    </p>
+
+    <h2>1.1 Dijkstra's Algorithm</h2>
+    <p>Dijkstra’s algorithm ensures the shortest path from the source to all nodes in a weighted graph with non-negative
+      edges, making it ideal for reliable and optimal route planning.</p>
+    <img alt="" class="bh lr ns c" width="600" height="414" loading="eager" role="presentation"
+      src="https://miro.medium.com/v2/resize:fit:750/1*Bv4vlSEMIQRgLxiijeNE5Q.gif">
+    <h2>⚙️ Algorithm Workflow</h2>
+    <pre class="mermaid">
+    flowchart TD
+        A[Start Location] --> B[Initialize all distances as INF]
+        B --> C[Set start distance = 0]
+        C --> D[Add start to Min Heap]
+        D --> E{Heap not empty?}
+        E -- Yes --> F[Extract node with min distance]
+        F --> G[Relax neighbors and update distances]
+        G --> H[Push updated neighbors to heap]
+        H --> E
+        E -- No --> I[Shortest paths finalized]
+        I --> J[Return shortest path to destination]
+        </pre>
+
+    <h2>💻 Code</h2>
+    <pre><code class="language-cpp">
+    #include &lt;iostream&gt;
+    #include &lt;vector&gt;
+    #include &lt;queue&gt;
+    #include &lt;climits&gt;
+    using namespace std;
+    
+    typedef pair&lt;int, int&gt; pii;
+    
+    vector&lt;int&gt; dijkstra(int n, vector&lt;vector&lt;pii&gt;&gt;&amp; adj, int src) {
+        vector&lt;int&gt; dist(n, INT_MAX);
+        priority_queue&lt;pii, vector&lt;pii&gt;, greater&lt;&gt;&gt; pq;
+        dist[src] = 0;
+        pq.push({0, src});
+    
+        while (!pq.empty()) {
+            auto [d, u] = pq.top(); pq.pop();
+            if (d &gt; dist[u]) continue;
+    
+            for (auto [v, w] : adj[u]) {
+                if (dist[u] + w &lt; dist[v]) {
+                    dist[v] = dist[u] + w;
+                    pq.push({dist[v], v});
+                }
+            }
+        }
+        return dist;
+    }
+      </code></pre>
+    <h2>📈 Time & Space Complexity</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Metric</th>
+          <th>Complexity</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Time (Adj List)</td>
+          <td>O((V + E) log V)</td>
+        </tr>
+        <tr>
+          <td>Space</td>
+          <td>O(V + E)</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p><small><strong>Legend:</strong>
+        V = Number of vertices (locations/nodes in the graph)<br>
+        E = Number of edges (roads/connections between nodes)
+      </small></p>
+
+
+    <h2>1.2 A* Search Algorithm</h2>
+    A* combines the actual path cost with a heuristic to guide the search, making it faster than Dijkstra in many
+    practical scenarios by focusing only on the most promising routes.
+    <img alt="File:Astar progress animation.gif"
+      src="//upload.wikimedia.org/wikipedia/commons/5/5d/Astar_progress_animation.gif" decoding="async" width="500"
+      height="500" data-file-width="210" data-file-height="210">
+
+    <h2>💻 Code</h2>
+    <pre><code class="language-cpp">
+    #include &lt;iostream&gt;
+    #include &lt;vector&gt;
+    #include &lt;queue&gt;
+    #include &lt;cmath&gt;
+    #include &lt;unordered_map&gt;
+    using namespace std;
+    
+    struct Node {
+        int id;
+        double g, h;
+        bool operator&gt;(const Node&amp; other) const {
+            return g + h &gt; other.g + other.h;
+        }
+    };
+    
+    double heuristic(int a, int b, vector&lt;pair&lt;int, int&gt;&gt;&amp; coords) {
+        auto [x1, y1] = coords[a];
+        auto [x2, y2] = coords[b];
+        return sqrt((x1 - x2)*(x1 - x2) + (y1 - y2)*(y1 - y2));
+    }
+    
+    vector&lt;double&gt; a_star(int n, vector&lt;vector&lt;pair&lt;int, double&gt;&gt;&gt;&amp; adj, int start, int goal, vector&lt;pair&lt;int, int&gt;&gt;&amp; coords) {
+        priority_queue&lt;Node, vector&lt;Node&gt;, greater&lt;&gt;&gt; pq;
+        vector&lt;double&gt; g(n, 1e9);
+        g[start] = 0;
+        pq.push({start, 0, heuristic(start, goal, coords)});
+    
+        while (!pq.empty()) {
+            auto current = pq.top(); pq.pop();
+            if (current.id == goal) break;
+    
+            for (auto [neighbor, cost] : adj[current.id]) {
+                double tentative_g = g[current.id] + cost;
+                if (tentative_g &lt; g[neighbor]) {
+                    g[neighbor] = tentative_g;
+                    pq.push({neighbor, tentative_g, heuristic(neighbor, goal, coords)});
+                }
+            }
+        }
+        return g;
+    }
+      </code></pre>
+    <h2>📈 Time & Space Complexity</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Metric</th>
+          <th>Complexity</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Time (Adj List)</td>
+          <td>O((V + E) log V) (avg)</td>
+        </tr>
+        <tr>
+          <td>Space</td>
+          <td>O(V + E)</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p><small><strong>Legend:</strong>
+        V = Number of vertices (locations/nodes in the graph)<br>
+        E = Number of edges (roads/connections between nodes)
+      </small></p>
+  <h2>Inferences</h2>
+  <p>Dijkstra's algorithm efficiently finds the shortest path on static road networks, ensuring minimum distance or time without heuristic guidance.</p>
+  <p>A* algorithm improves upon Dijkstra by using heuristics to speed up pathfinding, making it more suitable for real-time route optimization with dynamic factors like traffic.</p>
+
+  </section>
+  <section id="case-study" style="margin-top: 2rem;">
+    <h1>2. Closest Point of Interest (POI)</h1>
+
+    <h2>🔍 Business Problem:</h2>
+    <p>Users want to find the nearest hospital, gas station, or ATM based on their current location quickly and
+      accurately.</p>
+
+    <h2>🎯 Objective:</h2>
+    <p>Given a user’s coordinates, return the closest POI of a given type using either a grid (road map) or spatial
+      coordinates (latitude/longitude).</p>
+
+    <h2>2.1 BFS on Grid Map</h2>
+    <p>BFS guarantees the shortest path in an unweighted grid, making it ideal for finding the nearest POI in road-based
+      or uniform step environments.</p>
+    <img alt="File:Animated BFS.gif" src="//upload.wikimedia.org/wikipedia/commons/4/46/Animated_BFS.gif"
+      decoding="async" width="400" height="400" data-file-width="187" data-file-height="175">
+    <h2>⚙️ Algorithm Workflow</h2>
+    <pre class="mermaid">
+    flowchart TD
+        A[Start from User's Location] --> B{Is it a POI?}
+        B -- Yes --> G[Return POI]
+        B -- No --> C[Add neighbors to queue]
+        C --> D[Mark visited]
+        D --> E{Queue empty?}
+        E -- No --> A
+        E -- Yes --> F[Return Not Found]
+    </pre>
+
+    <h2>💻 Code</h2>
+    <pre><code class="language-cpp">#include &lt;iostream&gt;
+#include &lt;queue&gt;
+#include &lt;vector&gt;
+using namespace std;
+
+const int dx[4] = {0, 1, 0, -1};
+const int dy[4] = {1, 0, -1, 0};
+
+struct Cell {
+    int x, y;
+};
+
+bool isValid(int x, int y, int rows, int cols, vector&lt;vector&lt;bool&gt;&gt;&amp; visited) {
+    return x &gt;= 0 &amp;&amp; x &lt; rows &amp;&amp; y &gt;= 0 &amp;&amp; y &lt; cols &amp;&amp; !visited[x][y];
+}
+
+Cell bfsClosestPOI(vector&lt;vector&lt;char&gt;&gt;&amp; map, int startX, int startY, char target) {
+    int rows = map.size(), cols = map[0].size();
+    vector&lt;vector&lt;bool&gt;&gt; visited(rows, vector&lt;bool&gt;(cols, false));
+    queue&lt;Cell&gt; q;
+    q.push({startX, startY});
+    visited[startX][startY] = true;
+
+    while (!q.empty()) {
+        Cell curr = q.front(); q.pop();
+        if (map[curr.x][curr.y] == target)
+            return curr;
+
+        for (int i = 0; i &lt; 4; ++i) {
+            int nx = curr.x + dx[i];
+            int ny = curr.y + dy[i];
+            if (isValid(nx, ny, rows, cols, visited)) {
+                visited[nx][ny] = true;
+                q.push({nx, ny});
+            }
+        }
+    }
+    return {-1, -1};
+}</code></pre>
+
+    <h2>📈 Time & Space Complexity</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Metric</th>
+          <th>Complexity</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Time</td>
+          <td>O(N × M)</td>
+        </tr>
+        <tr>
+          <td>Space</td>
+          <td>O(N × M)</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p><small><strong>Legend:</strong><br>
+        N = Number of rows in the map grid<br>
+        M = Number of columns in the map grid
+      </small></p>
+
+
+    <h2>2.2 KD-Tree on Coordinates</h2>
+    <p>KD-Tree allows fast nearest-neighbor searches in spatial data, making it efficient for finding the closest POI
+      using latitude and longitude.</p>
+    <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/Kdtree_animation.gif" jsaction=""
+      class="sFlh5c FyHeAf iPVvYb" style="max-width: 640px; height: 400; margin: 0px; width: 400;"
+      alt="File:Kdtree animation.gif - Wikimedia Commons" jsname="kn3ccd">
+    <h2>⚙️ Algorithm Workflow</h2>
+    <pre class="mermaid">
+    flowchart TD
+        A[Build KD-Tree from POIs] --> B[Input User Coordinates]
+        B --> C[Search KD-Tree]
+        C --> D[Find Nearest Neighbor]
+        D --> E[Return Closest POI]
+    </pre>
+    <h2>💻 Code</h2>
+    <pre><code class="language-cpp">#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;cmath&gt;
+using namespace std;
+
+struct Point {
+    double x, y;
+    string name;
+};
+
+struct KDNode {
+    Point point;
+    KDNode *left = nullptr, *right = nullptr;
+};
+
+double dist(const Point&amp; a, const Point&amp; b) {
+    return sqrt((a.x - b.x)*(a.x - b.x) + (a.y - b.y)*(a.y - b.y));
+}
+
+KDNode* buildKD(vector&lt;Point&gt;&amp; points, int depth = 0) {
+    if (points.empty()) return nullptr;
+
+    int axis = depth % 2;
+    sort(points.begin(), points.end(), [axis](const Point&amp; a, const Point&amp; b) {
+        return axis == 0 ? a.x &lt; b.x : a.y &lt; b.y;
+    });
+
+    int mid = points.size() / 2;
+    KDNode* node = new KDNode{points[mid]};
+    vector&lt;Point&gt; left(points.begin(), points.begin() + mid);
+    vector&lt;Point&gt; right(points.begin() + mid + 1, points.end());
+    node-&gt;left = buildKD(left, depth + 1);
+    node-&gt;right = buildKD(right, depth + 1);
+    return node;
+}
+
+void nearest(KDNode* node, const Point&amp; target, Point&amp; best, double&amp; bestDist, int depth = 0) {
+    if (!node) return;
+    double d = dist(node-&gt;point, target);
+    if (d &lt; bestDist) {
+        bestDist = d;
+        best = node-&gt;point;
+    }
+
+    int axis = depth % 2;
+    KDNode* near = (axis == 0 ? (target.x &lt; node-&gt;point.x ? node-&gt;left : node-&gt;right)
+                              : (target.y &lt; node-&gt;point.y ? node-&gt;left : node-&gt;right));
+    KDNode* far = near == node-&gt;left ? node-&gt;right : node-&gt;left;
+
+    nearest(near, target, best, bestDist, depth + 1);
+    double diff = (axis == 0 ? target.x - node-&gt;point.x : target.y - node-&gt;point.y);
+    if (diff * diff &lt; bestDist)
+        nearest(far, target, best, bestDist, depth + 1);
+    
+    int main() {
+    vector&lt;Point&gt; pois = {{2, 3, "Gas Station"}, {5, 4, "ATM"}, {9, 6, "Hospital"}};
+    Point user = {3, 3};
+
+    KDNode* root = buildKD(pois);
+    Point best;
+    double bestDist = 1e9;
+    nearest(root, user, best, bestDist);
+
+    cout &lt;&lt; "Closest POI: " &lt;&lt; best.name &lt;&lt; " at (" &lt;&lt; best.x &lt;&lt; ", " &lt;&lt; best.y &lt;&lt; ")\n";
+}</code></pre>
+
+    <h2>📈 Time & Space Complexity</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Metric</th>
+          <th>Complexity</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Build Time</td>
+          <td>O(N·log N)</td>
+        </tr>
+        <tr>
+          <td>Query Time</td>
+          <td>O(log N) average, O(N) worst-case</td>
+        </tr>
+        <tr>
+          <td>Space</td>
+          <td>O(N)</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p><small><strong>Legend:</strong><br>
+        N = Number of POIs (points of interest)
+      </small></p>
+  <h2>Inferences</h2>
+  <p>BFS on grid maps efficiently explores neighboring locations to find the closest POI, ideal for simple, discrete road networks.</p>
+  <p>KD Tree enables fast nearest neighbor searches in spatial coordinates, providing quick and scalable POI retrieval in continuous geographic space.</p>
+  </section>
+  <section id="case-study" style="margin-top: 2rem;">
+    <h1>3. Offline Map Compression</h1>
+
+    <h2>🔍 Business Problem:</h2>
+    <p>
+      Users often download offline maps in areas with limited or no internet. However, high-resolution map data can
+      consume large amounts of storage, which is a challenge for devices with limited memory.
+    </p>
+
+    <h2>🎯 Objective:</h2>
+    <p>
+      Reduce the size of downloaded map data while retaining all essential route and location information, ensuring
+      navigation is still accurate and responsive offline.
+    </p>
+
+    <h2>3.1 Prim's Algorithm</h2>
+    <p>Prim’s Algorithm efficiently grows the MST by expanding from a starting node, making it ideal for dense graphs
+      like road networks.</p>
+    <img alt="File:Prim-animation.gif" src="//upload.wikimedia.org/wikipedia/en/9/96/Prim-animation.gif?20101018030810"
+      decoding="async" width="519" height="278" data-file-width="519" data-file-height="278">
+    <h2>💻 Code </h2>
+    <pre><code class="language-cpp">
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;queue&gt;
+#include &lt;utility&gt;
+using namespace std;
+
+const int MAX = 1000;
+vector&lt;pair&lt;int, int&gt;&gt; adj[MAX];
+bool visited[MAX];
+
+int primMST(int start, int n) {
+    priority_queue&lt;pair&lt;int, int&gt;, vector&lt;pair&lt;int, int&gt;&gt;, greater&lt;&gt;&gt; pq;
+    pq.push({0, start});
+    int totalWeight = 0;
+
+    while (!pq.empty()) {
+        auto [weight, node] = pq.top(); pq.pop();
+        if (visited[node]) continue;
+
+        visited[node] = true;
+        totalWeight += weight;
+
+        for (auto [w, neigh] : adj[node]) {
+            if (!visited[neigh])
+                pq.push({w, neigh});
+        }
+    }
+    return totalWeight;
+}
+  </code></pre>
+
+    <h2>📈 Time & Space Complexity</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Metric</th>
+          <th>Complexity</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Time</td>
+          <td>O(E log V)</td>
+        </tr>
+        <tr>
+          <td>Space</td>
+          <td>O(V + E)</td>
+        </tr>
+      </tbody>
+    </table>
+    <p>
+      <small><strong>Legend:</strong><br>
+        V = Number of vertices (map junctions or landmarks)<br>
+        E = Number of edges (roads or connections between locations)</small>
+    </p>
+
+
+    <h2>3.2 Kruskal's Algorithm</h2>
+    <p>Kruskal’s Algorithm works well by sorting edges and adding the smallest ones without forming cycles, which is
+      effective for sparse graphs and easy to implement.</p>
+    <h2>💻 Kruskal's Algorithm</h2>
+    <pre><code class="language-cpp">
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;algorithm&gt;
+using namespace std;
+
+struct Edge {
+    int u, v, w;
+    bool operator&lt;(const Edge&amp; e) const { return w &lt; e.w; }
+};
+
+vector&lt;int&gt; parent;
+
+int find(int x) {
+    if (parent[x] != x)
+        parent[x] = find(parent[x]);
+    return parent[x];
+}
+
+bool unite(int a, int b) {
+    a = find(a), b = find(b);
+    if (a == b) return false;
+    parent[a] = b;
+    return true;
+}
+
+int kruskalMST(int n, vector&lt;Edge&gt;&amp; edges) {
+    sort(edges.begin(), edges.end());
+    parent.resize(n);
+    for (int i = 0; i &lt; n; i++) parent[i] = i;
+
+    int totalWeight = 0;
+    for (Edge e : edges) {
+        if (unite(e.u, e.v))
+            totalWeight += e.w;
+    }
+    return totalWeight;
+}
+  </code></pre>
+
+    <h2>📈 Time & Space Complexity</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Metric</th>
+          <th>Complexity</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Time</td>
+          <td>O(E log E)</td>
+        </tr>
+        <tr>
+          <td>Space</td>
+          <td>O(V + E)</td>
+        </tr>
+      </tbody>
+    </table>
+    <p>
+      <small><strong>Legend:</strong><br>
+        V = Number of vertices (map junctions or landmarks)<br>
+        E = Number of edges (roads or connections between locations)</small>
+    </p>
+  <h2>Inferences</h2>
+  <p>Prim's Algorithm incrementally builds a minimum spanning tree to compress map data by connecting all points with minimal total edge weight.</p>
+  <p>Kruskal's Algorithm efficiently finds a minimum spanning tree by sorting edges and avoiding cycles, optimizing offline map storage without losing connectivity.</p>
+
+    <h2>
+      <a href="/Services/references.html" style="text-decoration: none; color: inherit;">
+        Click here for References
+      </a>
+    </h2>
+  </section>
+
+</body>
+
+</html>

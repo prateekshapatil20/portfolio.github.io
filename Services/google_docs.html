@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Google Docs Case Studies</title>
+    <link rel="stylesheet" href="/style.css" />
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true });
+    </script>
+</head>
+
+<body>
+    <header>
+        <a href="#" class="logo">Portfolio</a>
+        <nav>
+            <ul>
+                <li><a href="/index.html">Home</a></li>
+                <li><a href="/index.html#about">About</a></li>
+                <li><a href="/index.html#education">Education</a></li>
+                <li><a href="/index.html#skills">Skills</a></li>
+                <li><a href="/index.html#projects">Projects</a></li>
+                <li><a href="/index.html#google">Google</a></li>
+                <li><a href="/index.html#contact">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
+    <section id="case-study" style="margin-top: 2rem;">
+        <h1>Google Docs Case Studies</h1>
+        <h1>1. Spell Checking</h1>
+
+        <h2>🔍 Business Problem:</h2>
+        <p>Google Search and Docs need to efficiently identify and correct misspelled words in user queries and
+            documents with high accuracy and speed.</p>
+
+            <h2>🎯 Objective:</h2>
+  <p>Design a system that quickly finds and suggests corrections for misspelled words by efficiently searching for words within a given edit distance using BK-Tree.</p>
+
+        <h2>1.1 Burkhard-Keller Tree (BK-Tree)</h2>
+        <p>BK-Trees enable fast approximate string matching using edit distance, ideal for spell checkers where a user
+            may input words with typos or slight misspellings.</p>
+
+        <h2>⚙️ Algorithm Workflow</h2>
+        <pre class="mermaid">
+flowchart TD
+    A[Input Misspelled Word] --> B[Traverse BK-Tree Root]
+    B --> C{Edit Distance < threshold?}
+    C -->|Yes| D[Add to Candidates List]
+    C -->|No| E[Skip Branch]
+    D --> F[Rank Candidates]
+    F --> G[Suggest Most Probable Word]
+</pre>
+
+        <h2>💻 Code</h2>
+        <pre><code class="language-cpp">
+#include &lt;iostream&gt;
+#include &lt;unordered_map&gt;
+#include &lt;vector&gt;
+#include &lt;string&gt;
+#include &lt;cmath&gt;
+using namespace std;
+
+int editDistance(const string& a, const string& b) {
+    int n = a.size(), m = b.size();
+    vector&lt;vector&lt;int&gt;&gt; dp(n+1, vector&lt;int&gt;(m+1));
+    for (int i = 0; i &lt;= n; ++i)
+        for (int j = 0; j &lt;= m; ++j) {
+            if (i == 0) dp[i][j] = j;
+            else if (j == 0) dp[i][j] = i;
+            else if (a[i-1] == b[j-1]) dp[i][j] = dp[i-1][j-1];
+            else dp[i][j] = 1 + min({dp[i-1][j], dp[i][j-1], dp[i-1][j-1]});
+        }
+    return dp[n][m];
+}
+
+struct BKNode {
+    string word;
+    unordered_map&lt;int, BKNode*&gt; children;
+    BKNode(const string& w) : word(w) {}
+};
+
+class BKTree {
+    BKNode* root = nullptr;
+
+public:
+    void insert(const string& word) {
+        if (!root) {
+            root = new BKNode(word);
+            return;
+        }
+        BKNode* curr = root;
+        while (true) {
+            int dist = editDistance(word, curr-&gt;word);
+            if (curr-&gt;children.count(dist))
+                curr = curr-&gt;children[dist];
+            else {
+                curr-&gt;children[dist] = new BKNode(word);
+                break;
+            }
+        }
+    }
+
+    void search(const string& word, int threshold, vector&lt;string&gt;&amp; result, BKNode* node = nullptr) {
+        if (!node) node = root;
+        int dist = editDistance(word, node-&gt;word);
+        if (dist &lt;= threshold) result.push_back(node-&gt;word);
+        for (int d = dist - threshold; d &lt;= dist + threshold; ++d)
+            if (node-&gt;children.count(d))
+                search(word, threshold, result, node-&gt;children[d]);
+    }
+};
+
+int main() {
+    BKTree tree;
+    vector&lt;string&gt; dictionary = {"hello", "help", "hell", "shell", "smell"};
+    for (auto&amp; word : dictionary) tree.insert(word);
+
+    vector&lt;string&gt; suggestions;
+    tree.search("helo", 2, suggestions);
+
+    cout &lt;&lt; "Suggestions for 'helo':\n";
+    for (auto&amp; s : suggestions) cout &lt;&lt; s &lt;&lt; endl;
+    return 0;
+}
+</code></pre>
+
+        <h2>📈 Time &amp; Space Complexity</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Operation</th>
+                    <th>Time Complexity</th>
+                    <th>Space Complexity</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Insert</td>
+                    <td>O(log n)</td>
+                    <td>O(n)</td>
+                </tr>
+                <tr>
+                    <td>Query</td>
+                    <td>O(log n)</td>
+                    <td>O(k)</td>
+                </tr>
+            </tbody>
+        </table>
+        <p><small><strong>Legend:</strong> k = number of results within edit distance threshold, n = number of
+                dictionary entries</small></p>
+                <h2>Inferences</h2>
+  <p>BK-Tree significantly speeds up approximate string matching compared to naive methods, enabling real-time spell checking and autocorrect with high accuracy in large dictionaries.</p>
+
+    </section>
+    <section id="case-study" style="margin-top: 2rem;">
+        <h1>2. Document Versioning in Google Docs</h1>
+
+        <h2>🔍 Business Problem:</h2>
+        <p>Google Docs needs to maintain an efficient version history of documents, enabling fast diffs, rollbacks, and
+            conflict resolution in collaborative editing scenarios.</p>
+
+          <h2>🎯 Objective:</h2>
+  <p>Implement a system to efficiently track document versions using cryptographic hashes that enable fast comparison, difference detection, and conflict resolution in collaborative environments.</p>
+
+
+        <h2>2.1 Merkle Tree</h2>
+        <p>Merkle Trees allow efficient comparison and verification of changes between document versions using
+            cryptographic hash trees.</p>
+
+        <h2>⚙️ Algorithm Workflow</h2>
+        <pre class="mermaid">
+    flowchart TD
+        A[Document Chunks] --> B[Hash Each Chunk]
+        B --> C[Build Merkle Tree from Chunk Hashes]
+        C --> D[Store Root Hash for Each Version]
+        D --> E[Compare Root Hashes to Detect Changes]
+        E --> F[Drill Down to Identify Differences]
+        F --> G[Enable Version Sync or Rollback]
+    </pre>
+
+        <h2>💻 Code</h2>
+        <pre><code class="language-cpp">
+#include <iostream>
+#include <vector>
+#include <string>
+#include <openssl/sha.h>
+
+using namespace std;
+
+string sha256(const string& str) {
+    unsigned char hash[SHA256_DIGEST_LENGTH];
+    SHA256((unsigned char*)str.c_str(), str.size(), hash);
+    char output[65];
+    for (int i = 0; i < SHA256_DIGEST_LENGTH; i++)
+        sprintf(output + i * 2, "%02x", hash[i]);
+    return string(output);
+}
+
+string buildMerkle(vector<string>& chunks) {
+    if (chunks.empty()) return "";
+    while (chunks.size() > 1) {
+        vector<string> newChunks;
+        for (size_t i = 0; i < chunks.size(); i += 2) {
+            if (i + 1 < chunks.size())
+                newChunks.push_back(sha256(chunks[i] + chunks[i + 1]));
+            else
+                newChunks.push_back(chunks[i]);
+        }
+        chunks = newChunks;
+    }
+    return chunks[0];
+}
+
+int main() {
+    vector<string> docChunks = {"Hello", " world", " this", " is", " a test."};
+    for (auto& chunk : docChunks)
+        chunk = sha256(chunk);
+
+    string rootHash = buildMerkle(docChunks);
+    cout << "Root Hash: " << rootHash << endl;
+    return 0;
+}
+    </code></pre>
+
+        <h2>📈 Time & Space Complexity</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Operation</th>
+                    <th>Time Complexity</th>
+                    <th>Space Complexity</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Hashing Chunks</td>
+                    <td>O(n)</td>
+                    <td>O(n)</td>
+                </tr>
+                <tr>
+                    <td>Building Merkle Tree</td>
+                    <td>O(n)</td>
+                    <td>O(n)</td>
+                </tr>
+                <tr>
+                    <td>Compare Two Versions</td>
+                    <td>O(log n)</td>
+                    <td>O(log n)</td>
+                </tr>
+            </tbody>
+        </table>
+        <p><small><strong>Legend:</strong> n = number of document chunks</small></p>
+        <h2>Inferences</h2>
+  <p>Merkle Trees provide a scalable and secure method for managing document versions, allowing quick verification of changes and enabling seamless collaboration with minimal data overhead.</p>
+        <h2>
+            <a href="/Services/references.html" style="text-decoration: none; color: inherit;">
+                Click here for References
+            </a>
+        </h2>
+    </section>
+</body>
+
+</html>

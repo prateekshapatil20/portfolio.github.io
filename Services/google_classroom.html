@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Google Classroom Case Studies</title>
+  <link rel="stylesheet" href="/style.css" />
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({ startOnLoad: true });
+  </script>
+</head>
+
+<body>
+  <header>
+    <a href="#" class="logo">Portfolio</a>
+    <nav>
+      <ul>
+        <li><a href="/index.html">Home</a></li>
+        <li><a href="/index.html#about">About</a></li>
+        <li><a href="/index.html#education">Education</a></li>
+        <li><a href="/index.html#skills">Skills</a></li>
+        <li><a href="/index.html#projects">Projects</a></li>
+        <li><a href="/index.html#google">Google</a></li>
+        <li><a href="/index.html#contact">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+  <section id="case-study" style="margin-top: 2rem;">
+    <h1>Case Studies for Google Classroom</h1>
+    <h1>1. Assignment Scheduler</h1>
+
+    <h2>🔍 Business Problem:</h2>
+    <p>Schedule assignments for students respecting prerequisites and deadlines to ensure optimal task order without
+      conflicts.</p>
+    <h2>🎯 Objective:</h2>
+<p>Determine a valid sequence to schedule assignments by respecting all prerequisite constraints, ensuring timely completion without conflicts.</p>
+
+    <h2>1.1 Topological Sort</h2>
+    <p>Used to find a linear ordering of assignments based on dependency constraints (prerequisites), ensuring no cyclic
+      dependencies and valid scheduling.</p>
+
+    <h2>⚙️ Algorithm Workflow</h2>
+    <pre class="mermaid">
+    flowchart TD
+      A[Assignments with Dependencies] --> B[Build Directed Acyclic Graph]
+      B --> C[Perform Topological Sort]
+      C --> D[Generate Valid Assignment Schedule]
+      D --> E[Notify Students]
+  </pre>
+
+    <h2>💻 Code</h2>
+    <pre><code class="language-cpp">
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;queue&gt;
+using namespace std;
+
+void topologicalSort(int n, vector&lt;vector&lt;int&gt;&gt;&amp; graph) {
+    vector&lt;int&gt; indegree(n, 0);
+    for (int u = 0; u &lt; n; ++u) {
+        for (int v : graph[u]) {
+            indegree[v]++;
+        }
+    }
+
+    queue&lt;int&gt; q;
+    for (int i = 0; i &lt; n; ++i) {
+        if (indegree[i] == 0) q.push(i);
+    }
+
+    vector&lt;int&gt; order;
+    while (!q.empty()) {
+        int u = q.front(); q.pop();
+        order.push_back(u);
+        for (int v : graph[u]) {
+            indegree[v]--;
+            if (indegree[v] == 0) q.push(v);
+        }
+    }
+
+    if ((int)order.size() != n) {
+        cout &lt;&lt; "Cycle detected, scheduling impossible." &lt;&lt; endl;
+        return;
+    }
+
+    cout &lt;&lt; "Assignment Schedule Order: ";
+    for (int a : order) cout &lt;&lt; a &lt;&lt; " ";
+    cout &lt;&lt; endl;
+}
+
+int main() {
+    int n = 6; // Number of assignments
+    vector&lt;vector&lt;int&gt;&gt; graph(n);
+
+    graph[0].push_back(2);
+    graph[1].push_back(2);
+    graph[2].push_back(3);
+    graph[3].push_back(4);
+
+    topologicalSort(n, graph);
+    return 0;
+}
+  </code></pre>
+
+    <h2>📈 Time &amp; Space Complexity</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Operation</th>
+          <th>Time Complexity</th>
+          <th>Space Complexity</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Build Graph</td>
+          <td>O(n + e)</td>
+          <td>O(n + e)</td>
+        </tr>
+        <tr>
+          <td>Topological Sort</td>
+          <td>O(n + e)</td>
+          <td>O(n)</td>
+        </tr>
+      </tbody>
+    </table>
+    <p><small><strong>Legend:</strong> <em>n</em> = number of assignments (nodes), <em>e</em> = number of dependencies
+        (edges)</small></p>
+      <h2>Inferences</h2>
+<p>Topological Sort provides an efficient way to order assignments linearly, detecting any cyclic dependencies and guaranteeing a feasible schedule.</p>
+
+  </section>
+  <section id="case-study" style="margin-top: 2rem;">
+    <h1>2. Plagiarism Detection in Google Classroom</h1>
+
+    <h2>🔍 Business Problem:</h2>
+    <p>Google Classroom needs to automatically detect similar or identical text submissions across student assignments
+      to prevent plagiarism.</p>
+
+    <h2>🎯 Objective:</h2>
+    <p>Efficiently identify overlapping text patterns across large numbers of documents with minimal computational
+      overhead.</p>
+
+    <h2>2.1 Rabin-Karp Algorithm</h2>
+    <p>Rabin-Karp uses hashing to quickly compare text substrings, enabling scalable and efficient similarity detection.
+    </p>
+
+    <h2>⚙️ Algorithm Workflow</h2>
+    <pre class="mermaid">
+    flowchart TD
+      A[Student Submissions] --> B[Break into Substrings]
+      B --> C[Compute Rolling Hash]
+      C --> D[Store Hashes in Hash Table]
+      D --> E[Compare Hashes with Other Submissions]
+      E --> F[Flag Similar Documents for Review]
+  </pre>
+
+    <h2>💻 Code</h2>
+    <pre><code class="language-cpp">
+#include &lt;iostream&gt;
+#include &lt;string&gt;
+#include &lt;unordered_set&gt;
+using namespace std;
+
+const int p = 31; // prime base
+const int m = 1e9 + 9; // large prime modulus
+
+long long compute_hash(const string &s) {
+    long long hash_value = 0;
+    long long p_pow = 1;
+    for (char c : s) {
+        hash_value = (hash_value + (c - 'a' + 1) * p_pow) % m;
+        p_pow = (p_pow * p) % m;
+    }
+    return hash_value;
+}
+
+bool check_plagiarism(const string &doc1, const string &doc2, int len) {
+    unordered_set&lt;long long&gt; hashes;
+    for (int i = 0; i + len &lt;= doc1.size(); ++i)
+        hashes.insert(compute_hash(doc1.substr(i, len)));
+
+    for (int i = 0; i + len &lt;= doc2.size(); ++i)
+        if (hashes.count(compute_hash(doc2.substr(i, len))))
+            return true;
+
+    return false;
+}
+
+int main() {
+    string doc1 = "the quick brown fox jumps over the lazy dog";
+    string doc2 = "a quick brown animal jumped";
+
+    if (check_plagiarism(doc1, doc2, 10))
+        cout &lt;&lt; "Potential plagiarism detected!" &lt;&lt; endl;
+    else
+        cout &lt;&lt; "Documents are clean." &lt;&lt; endl;
+
+    return 0;
+}
+  </code></pre>
+
+    <h2>📈 Time &amp; Space Complexity</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Operation</th>
+          <th>Time Complexity</th>
+          <th>Space Complexity</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Hash Computation</td>
+          <td>O(n)</td>
+          <td>O(1)</td>
+        </tr>
+        <tr>
+          <td>Duplicate Check</td>
+          <td>O(n + m)</td>
+          <td>O(n)</td>
+        </tr>
+      </tbody>
+    </table>
+    <p><small><strong>Legend:</strong> <em>n</em> = length of first document, <em>m</em> = length of second
+        document</small></p>
+
+    <h2>2.2 Knuth-Morris-Pratt (KMP)</h2>
+    <p>KMP is used here because it efficiently detects exact substring matches within large documents in linear time,
+      ideal for plagiarism scanning.</p>
+    <h2>⚙️ Algorithm Workflow</h2>
+    <pre class="mermaid">
+    flowchart TD
+      A[Student Submissions] --> B[Preprocess Pattern Build LPS Array]
+      B --> C[Scan Text Using KMP Search]
+      C --> D[Detect Matching Substrings]
+      D --> E[Flag Suspicious Matches]
+  </pre>
+
+    <h2>💻 Code</h2>
+    <pre><code class="language-cpp">
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+using namespace std;
+
+vector&lt;int&gt; computeLPS(const string&amp; pattern) {
+    int n = pattern.size();
+    vector&lt;int&gt; lps(n, 0);
+    int len = 0, i = 1;
+
+    while (i &lt; n) {
+        if (pattern[i] == pattern[len]) {
+            lps[i++] = ++len;
+        } else if (len &gt; 0) {
+            len = lps[len - 1];
+        } else {
+            lps[i++] = 0;
+        }
+    }
+    return lps;
+}
+
+bool KMP(const string&amp; text, const string&amp; pattern) {
+    vector&lt;int&gt; lps = computeLPS(pattern);
+    int i = 0, j = 0;
+    while (i &lt; text.size()) {
+        if (text[i] == pattern[j]) {
+            i++, j++;
+        }
+        if (j == pattern.size()) return true;
+        else if (i &lt; text.size() &amp;&amp; text[i] != pattern[j]) {
+            j = j ? lps[j - 1] : 0;
+        }
+    }
+    return false;
+}
+
+int main() {
+    string doc1 = "plagiarism is bad";
+    string doc2 = "this sentence contains plagiarism";
+    cout &lt;&lt; (KMP(doc2, "plagiarism is bad") ? "Match Found" : "No Match") &lt;&lt; endl;
+    return 0;
+}
+  </code></pre>
+
+    <h2>📈 Time &amp; Space Complexity</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Operation</th>
+          <th>Time Complexity</th>
+          <th>Space Complexity</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Preprocessing (LPS)</td>
+          <td>O(m)</td>
+          <td>O(m)</td>
+        </tr>
+        <tr>
+          <td>Pattern Search</td>
+          <td>O(n)</td>
+          <td>O(1)</td>
+        </tr>
+      </tbody>
+    </table>
+    <p><small><strong>Legend:</strong> <em>n</em> = length of text, <em>m</em> = length of pattern</small></p>
+    <h2>Inferences:</h2>
+<p>The Rabin-Karp algorithm uses efficient rolling hash techniques to quickly identify potential plagiarism candidates by matching text patterns with low overhead.</p>
+<p>The KMP algorithm then performs exact pattern matching to confirm plagiarism by avoiding redundant comparisons, ensuring accuracy and speed.</p>
+
+  </section>
+  <section id="case-study" style="margin-top: 2rem;">
+    <h1>3. Grade Curve Estimation in Google Classroom</h1>
+
+    <h2>🔍 Business Problem:</h2>
+    <p>Google Classroom wants to estimate curved grades efficiently by comparing each student’s score with others to
+      determine percentile-based adjustments.</p>
+    <h2>🎯 Objective:</h2>
+<p>Efficiently estimate curved grades by sorting student scores and using binary search to quickly determine percentile ranks and thresholds for grade adjustments.</p>
+
+    <h2>3.1 Sorting + Binary Search</h2>
+    <p>Sorting the scores allows efficient percentile or threshold-based lookups using binary search, enabling fast
+      grade estimation for large classes.</p>
+
+    <h2>⚙️ Algorithm Workflow</h2>
+    <pre class="mermaid">
+flowchart TD
+    A[Raw Student Scores] --> B[Sort Scores in Ascending Order]
+    B --> C[For Each Student, Use Binary Search]
+    C --> D[Find Percentile Rank or Curve Cutoff]
+    D --> E[Adjust Grade Accordingly]
+    E --> F[Display Curved Grades to Students]
+  </pre>
+
+    <h2>💻 Code</h2>
+    <pre><code class="language-python">
+def curved_grade(scores, target):
+    scores.sort()
+    from bisect import bisect_right
+    index = bisect_right(scores, target)
+    percentile = (index / len(scores)) * 100
+    return percentile
+
+# Example usage:
+scores = [78, 85, 62, 90, 88, 76, 95, 69]
+target_score = 85
+print(f"Student at score {target_score} is at {curved_grade(scores, target_score):.2f} percentile.")
+  </code></pre>
+
+    <h2>📈 Time &amp; Space Complexity</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Operation</th>
+          <th>Time Complexity</th>
+          <th>Space Complexity</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Sort Scores</td>
+          <td>O(n log n)</td>
+          <td>O(1)</td>
+        </tr>
+        <tr>
+          <td>Binary Search</td>
+          <td>O(log n)</td>
+          <td>O(1)</td>
+        </tr>
+      </tbody>
+    </table>
+    <p><small><strong>Legend:</strong> n = number of students.</small></p>
+    <h2>Inferences:</h2>
+<p>Sorting organizes scores to enable quick and accurate percentile calculations.</p>
+<p>Binary search allows fast lookups within sorted scores, making grade curve estimation scalable for large classes.</p>
+    <h2>
+      <a href="/Services/references.html" style="text-decoration: none; color: inherit;">
+        Click here for References
+      </a>
+    </h2>
+  </section>
+</body>
+
+</html>
