@@ -1,1 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
 
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Google Chrome Case Studies</title>
+    <link rel="stylesheet" href="style.css" />
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true });
+    </script>
+
+</head>
+
+<body>
+
+    <header>
+        <a href="#" class="logo">Portfolio</a>
+        <nav>
+            <ul>
+                <li><a href="/index.html">Home</a></li>
+                <li><a href="/index.html#about">About</a></li>
+                <li><a href="/index.html#education">Education</a></li>
+                <li><a href="/index.html#skills">Skills</a></li>
+                <li><a href="/index.html#projects">Projects</a></li>
+                <li><a href="/index.html#google">Google</a></li>
+                <li><a href="/index.html#contact">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section id="case-study" style="margin-top: 2rem;">
+            <h1>Introduction</h1>
+            <p>Google Chrome is a widely-used web browser developed by Google, known for its speed, simplicity, and
+                powerful developer tools. It serves as a gateway to the internet for billions of users, making it a
+                critical platform for delivering fast and secure web experiences. As a software developer fascinated by
+                system efficiency and user-centric design, I've chosen Chrome for its complex architecture and
+                opportunities to optimize browsing performance through advanced algorithms and data structures.</p>
+            <img alt="" class="bh ls nx c" width="700" height="802" loading="eager" role="presentation"
+                src="https://miro.medium.com/v2/resize:fit:875/0*ABs1VRduCJs4rZ_p.">
+        </section>
+
+        <section id="case-study" style="margin-top: 2rem;">
+            <h1>Case Studies for Google Chrome</h1>
+            <h1>1. Google Search – Autocomplete Suggestions</h1>
+
+            <h2>🔍 Business Problem:</h2>
+            <p>When a user starts typing into the Google Search bar, Google provides real-time autocomplete suggestions
+                to save time and improve the search experience. This must be fast, relevant, and personalized.</p>
+
+            <h2>🎯 Objective:</h2>
+            <p>Design a system that suggests the top-k most relevant completions for a user’s partially typed query
+                using past search frequency.</p>
+            <h2>1.1 Trie</h2>
+            <p>We need a Trie in autocompletion to efficiently store and retrieve all words with a common prefix in
+                O(length
+                of prefix) time, enabling fast and scalable suggestions.</p>
+            <img alt="" class="bh ls my c" width="700" height="478" loading="lazy" role="presentation"
+                src="https://miro.medium.com/v2/resize:fit:875/1*aJxRGNYe52CE_bVRt0E1Eg.gif">
+            <h2>⚙️ Algorithm Workflow</h2>
+            <div class="mermaid">
+                flowchart TD
+                A[User types prefix] --> B[Check in Trie]
+                B --> C{Prefix Found?}
+                C -- No --> D[Return empty list]
+                C -- Yes --> E[Traverse subtree]
+                E --> F[Use Min Heap to get top-k frequent]
+                F --> G[Display suggestions]
+            </div>
+            <h2>💻 Code</h2>
+            <pre><code>
+#include &lt;iostream&gt;
+#include &lt;unordered_map&gt;
+#include &lt;vector&gt;
+#include &lt;string&gt;
+using namespace std;
+
+struct TrieNode {
+    unordered_map<char, trienode*=""> children;
+    bool isWord = false;
+    int freq = 0;
+    priority_queue<pair<int, string="">, vector<pair<int, string="">&gt;, greater&lt;&gt;&gt; heap;
+};
+
+class AutocompleteSystem {
+private:
+    TrieNode* root;
+    const int K = 5; 
+
+public:
+    AutocompleteSystem() {
+        root = new TrieNode();
+    }
+
+    void insert(const string&amp; word, int freq) {
+        TrieNode* node = root;
+        string prefix;
+        for (char ch : word) {
+            prefix += ch;
+            if (node-&gt;children.find(ch) == node-&gt;children.end())
+                node-&gt;children[ch] = new TrieNode();
+            node = node-&gt;children[ch];
+
+            node-&gt;heap.push({freq, word});
+            if (node-&gt;heap.size() &gt; K)
+                node-&gt;heap.pop(); 
+        }
+        node-&gt;isWord = true;
+        node-&gt;freq = freq;
+    }
+
+    vector<string> getSuggestions(const string&amp; prefix) {
+        TrieNode* node = root;
+        for (char ch : prefix) {
+            if (node-&gt;children.find(ch) == node-&gt;children.end())
+                return {}; // prefix not found
+            node = node-&gt;children[ch];
+        }
+
+        vector<pair<int, string="">&gt; temp;
+        while (!node-&gt;heap.empty()) {
+            temp.push_back(node-&gt;heap.top());
+            node-&gt;heap.pop();
+        }
+
+        for (const auto&amp; p : temp)
+            node-&gt;heap.push(p);
+
+        sort(temp.rbegin(), temp.rend());
+
+        vector<string> suggestions;
+        for (const auto&amp; p : temp)
+            suggestions.push_back(p.second);
+        return suggestions;
+    }
+};
+
+int main() {
+    AutocompleteSystem ac;
+    ac.insert("google", 10);
+    ac.insert("go", 15);
+    ac.insert("gmail", 5);
+    ac.insert("gdrive", 7);
+    ac.insert("golang", 3);
+
+    vector<string> results = ac.getSuggestions("g");
+
+    cout &lt;&lt; "Suggestions for 'g':\n";
+    for (const string&amp; word : results) {
+        cout &lt;&lt; word &lt;&lt; endl;
+    }
+
+    return 0;
+}
+
+</string></string></pair<int,></string></pair<int,></pair<int,></char,></code></pre>
+
+            <h2>📈 Time &amp; Space Complexity</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Operation</th>
+                        <th>Time Complexity</th>
+                        <th>Space Complexity</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Insert Word</td>
+                        <td>O(L·log k)</td>
+                        <td>O(L·k) per word</td>
+                    </tr>
+                    <tr>
+                        <td>Search Prefix</td>
+                        <td>O(L)</td>
+                        <td>O(1)</td>
+                    </tr>
+                    <tr>
+                        <td>Get Suggestions</td>
+                        <td>O(k·log k)</td>
+                        <td>O(1)</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p><small>L = length of word, k = top suggestions stored</small></p>
+            <h2>1.2 Ternary Search Tree</h2>
+            <pre><code class="language-cpp">
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;string&gt;
+#include &lt;algorithm&gt;
+using namespace std;
+
+struct TSTNode {
+    char data;
+    bool isEndOfWord;
+    TSTNode *left, *eq, *right;
+
+    TSTNode(char d) : data(d), isEndOfWord(false), left(nullptr), eq(nullptr), right(nullptr) {}
+};
+
+class TST {
+    TSTNode* root = nullptr;
+
+    TSTNode* insert(TSTNode* node, const string&amp; word, int idx) {
+        if (idx &gt;= word.size()) return node;
+        char ch = word[idx];
+
+        if (!node) node = new TSTNode(ch);
+
+        if (ch &lt; node-&gt;data)
+            node-&gt;left = insert(node-&gt;left, word, idx);
+        else if (ch &gt; node-&gt;data)
+            node-&gt;right = insert(node-&gt;right, word, idx);
+        else {
+            if (idx + 1 == word.size())
+                node-&gt;isEndOfWord = true;
+            else
+                node-&gt;eq = insert(node-&gt;eq, word, idx + 1);
+        }
+        return node;
+    }
+
+    void traverse(TSTNode* node, string prefix, vector<string>&amp; results) {
+        if (!node) return;
+        traverse(node-&gt;left, prefix, results);
+        if (node-&gt;isEndOfWord) results.push_back(prefix + node-&gt;data);
+        traverse(node-&gt;eq, prefix + node-&gt;data, results);
+        traverse(node-&gt;right, prefix, results);
+    }
+
+    TSTNode* searchPrefix(TSTNode* node, const string&amp; prefix, int idx) {
+        if (!node || idx &gt;= prefix.size()) return nullptr;
+        char ch = prefix[idx];
+
+        if (ch &lt; node-&gt;data)
+            return searchPrefix(node-&gt;left, prefix, idx);
+        else if (ch &gt; node-&gt;data)
+            return searchPrefix(node-&gt;right, prefix, idx);
+        else {
+            if (idx == prefix.size() - 1)
+                return node;
+            return searchPrefix(node-&gt;eq, prefix, idx + 1);
+        }
+    }
+
+public:
+    void insert(const string&amp; word) {
+        root = insert(root, word, 0);
+    }
+
+    vector<string> getSuggestions(const string&amp; prefix) {
+        vector<string> results;
+        TSTNode* node = searchPrefix(root, prefix, 0);
+        if (node) {
+            if (node-&gt;isEndOfWord) results.push_back(prefix);
+            traverse(node-&gt;eq, prefix, results);
+        }
+        return results;
+    }
+};
+int main() {
+    TST tree;
+    tree.insert("google");
+    tree.insert("go");
+    tree.insert("gmail");
+    tree.insert("golang");
+
+    vector<string> suggestions = tree.getSuggestions("go");
+    cout &lt;&lt; "Suggestions for 'go':\n";
+    for (const string&amp; s : suggestions) {
+        cout &lt;&lt; s &lt;&lt; endl;
+    }
+    return 0;
+}
+
+</string></string></string></string></code></pre>
+            <h2>⏱️ Time and Space Complexity</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Operation</th>
+                        <th>Time Complexity</th>
+                        <th>Space Complexity</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Insert</td>
+                        <td>O(L × log Σ)</td>
+                        <td>O(L) per word</td>
+                    </tr>
+                    <tr>
+                        <td>Search Prefix</td>
+                        <td>O(L × log Σ)</td>
+                        <td>O(1)</td>
+                    </tr>
+                    <tr>
+                        <td>Suggestions</td>
+                        <td>O(K)</td>
+                        <td>O(K × L)</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p><small>L = length of word, Σ = size of character set (due to tree split), K = number of matching
+                    suggestions</small></p>
+
+
+            <h2>1.3 Radix Tree (Compressed Trie)</h2>
+            <pre><code class="language-cpp">
+#include &lt;iostream&gt;
+#include &lt;unordered_map&gt;
+#include &lt;vector&gt;
+#include &lt;string&gt;
+using namespace std;
+
+class RadixNode {
+public:
+    unordered_map&lt;string, RadixNode*&gt; children;
+    bool isEndOfWord = false;
+
+    RadixNode() {}
+};
+
+class RadixTree {
+    RadixNode* root = new RadixNode();
+
+    void collectAll(RadixNode* node, string prefix, vector&lt;string&gt;&amp; results) {
+        if (node-&gt;isEndOfWord) results.push_back(prefix);
+        for (auto&amp; [edge, child] : node-&gt;children) {
+            collectAll(child, prefix + edge, results);
+        }
+    }
+
+public:
+    void insert(const string&amp; word) {
+        RadixNode* node = root;
+        string curr = word;
+
+        while (!curr.empty()) {
+            bool matched = false;
+            for (auto&amp; [edge, child] : node-&gt;children) {
+                int i = 0;
+                while (i &lt; edge.size() &amp;&amp; i &lt; curr.size() &amp;&amp; edge[i] == curr[i]) i++;
+
+                if (i == 0) continue;
+
+                if (i &lt; edge.size()) {
+                    // Split the edge
+                    string common = edge.substr(0, i);
+                    string edgeRem = edge.substr(i);
+                    string wordRem = curr.substr(i);
+
+                    RadixNode* splitNode = new RadixNode();
+                    splitNode-&gt;children[edgeRem] = child;
+
+                    node-&gt;children.erase(edge);
+                    node-&gt;children[common] = splitNode;
+
+                    if (!wordRem.empty()) {
+                        splitNode-&gt;children[wordRem] = new RadixNode();
+                        splitNode-&gt;children[wordRem]-&gt;isEndOfWord = true;
+                    } else {
+                        splitNode-&gt;isEndOfWord = true;
+                    }
+
+                    return;
+                } else {
+                    node = child;
+                    curr = curr.substr(i);
+                    matched = true;
+                    break;
+                }
+            }
+
+            if (!matched) {
+                node-&gt;children[curr] = new RadixNode();
+                node-&gt;children[curr]-&gt;isEndOfWord = true;
+                return;
+            }
+        }
+        node-&gt;isEndOfWord = true;
+    }
+
+    vector&lt;string&gt; getSuggestions(const string&amp; prefix) {
+        RadixNode* node = root;
+        string curr = prefix;
+
+        while (!curr.empty()) {
+            bool matched = false;
+            for (auto&amp; [edge, child] : node-&gt;children) {
+                int i = 0;
+                while (i &lt; edge.size() &amp;&amp; i &lt; curr.size() &amp;&amp; edge[i] == curr[i]) i++;
+
+                if (i == curr.size()) {
+                    node = child;
+                    matched = true;
+                    curr = "";
+                    break;
+                }
+
+                if (i == edge.size()) {
+                    node = child;
+                    curr = curr.substr(i);
+                    matched = true;
+                    break;
+                }
+
+                if (i &gt; 0 &amp;&amp; i &lt; curr.size()) {
+                    return {}; // Partial mismatch
+                }
+            }
+
+            if (!matched) return {};
+        }
+
+        vector&lt;string&gt; results;
+        collectAll(node, prefix, results);
+        return results;
+    }
+};
+int main() {
+    RadixTree tree;
+    tree.insert("google");
+    tree.insert("go");
+    tree.insert("golang");
+    tree.insert("gmail");
+
+    vector<string> suggestions = tree.getSuggestions("go");
+    cout &lt;&lt; "Suggestions for 'go':" &lt;&lt; endl;
+    for (const string&amp; s : suggestions) {
+        cout &lt;&lt; s &lt;&lt; endl;
+    }
+    return 0;
+}
+</string>
+</code></pre>
+            <h2>📈 Time &amp; Space Complexity</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Operation</th>
+                        <th>Time Complexity</th>
+                        <th>Space Complexity</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Insert Word</td>
+                        <td>O(L) (amortized)</td>
+                        <td>O(L) per word</td>
+                    </tr>
+                    <tr>
+                        <td>Search Prefix</td>
+                        <td>O(L)</td>
+                        <td>O(1)</td>
+                    </tr>
+                    <tr>
+                        <td>Get Suggestions</td>
+                        <td>O(K)</td>
+                        <td>O(K × L)</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p><small>L = length of word, K = number of suggestions matched</small></p>
+            </div>
+            <h2>Inferences</h2>
+<p>Each data structure—Trie, Radix Tree, and Ternary Search Tree—offers a unique tradeoff between space and time efficiency for autocomplete. Their independent evaluations reveal how structure choice impacts suggestion speed, memory usage, and scalability.</p>
+
+        </section>
+
+        <section id="case-study" style="margin-top: 2rem;">
+            <h1>2. Search Ranking</h1>
+            <h2>🔍Business Problem</h2>
+            <p>Given a web graph where each node is a page and edges represent hyperlinks,
+                rank the pages by importance.</p>
+            <h2>🎯 Objective</h2>
+            <p>Determine the relative importance of each webpage by analyzing the structure of incoming links using a link-based
+                scoring mechanism.</p>
+            <h2>2.1 Page Rank ALgorithm</h2>
+            <p>PageRank is a link analysis algorithm that assigns a score to each webpage based on the quantity and quality of links pointing to it, reflecting its relative importance in the web graph.</p>
+            <img data-attachment-id="1360"
+                data-permalink="https://sandipanweb.wordpress.com/2017/01/02/page-rank-and-power-iteration/pr1/"
+                data-orig-file="https://sandipanweb.wordpress.com/wp-content/uploads/2017/01/pr1.gif"
+                data-orig-size="480,480" data-comments-opened="1"
+                data-image-meta="{&quot;aperture&quot;:&quot;0&quot;,&quot;credit&quot;:&quot;&quot;,&quot;camera&quot;:&quot;&quot;,&quot;caption&quot;:&quot;&quot;,&quot;created_timestamp&quot;:&quot;0&quot;,&quot;copyright&quot;:&quot;&quot;,&quot;focal_length&quot;:&quot;0&quot;,&quot;iso&quot;:&quot;0&quot;,&quot;shutter_speed&quot;:&quot;0&quot;,&quot;title&quot;:&quot;&quot;,&quot;orientation&quot;:&quot;0&quot;}"
+                data-image-title="pr1" data-image-description="" data-image-caption=""
+                data-medium-file="https://sandipanweb.wordpress.com/wp-content/uploads/2017/01/pr1.gif?w=300"
+                data-large-file="https://sandipanweb.wordpress.com/wp-content/uploads/2017/01/pr1.gif?w=480"
+                class="alignnone size-full wp-image-1360"
+                src="https://sandipanweb.wordpress.com/wp-content/uploads/2017/01/pr1.gif?w=676" alt="pr1.gif"
+                srcset="https://sandipanweb.wordpress.com/wp-content/uploads/2017/01/pr1.gif 480w, https://sandipanweb.wordpress.com/wp-content/uploads/2017/01/pr1.gif?w=150&amp;h=150 150w, https://sandipanweb.wordpress.com/wp-content/uploads/2017/01/pr1.gif?w=300&amp;h=300 300w"
+                sizes="(max-width: 480px) 100vw, 480px">
+
+            <h2>⚙️ Algorithm Workflow</h2>
+            <pre class="mermaid">
+flowchart TD
+    A[Start: Input Web Graph] --> B[Initialize PageRank for each page]
+    B --> C[For each iteration:]
+    C --> D[Distribute current PageRank across outgoing links]
+    D --> E[Accumulate incoming PageRank for each page]
+    E --> F[Apply Damping Factor Formula]
+    F --> G{Convergence?}
+    G -- No --> C
+    G -- Yes --> H[Output Final PageRank Scores]
+    H --> I[Rank Pages Based on Scores]
+  </pre>
+            <h2>💻 PageRank Algorithm</h2>
+            <pre><code class="language-cpp">
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;unordered_map&gt;
+#include &lt;string&gt;
+#include &lt;iomanip&gt;
+
+using namespace std;
+
+const double DAMPING = 0.85;
+const int ITERATIONS = 100;
+const double EPSILON = 1e-6;
+
+class PageRank {
+    unordered_map&lt;string, vector&lt;string&gt;&gt; graph;
+    unordered_map&lt;string, double&gt; rank;
+
+public:
+    void addPage(const string&amp; from, const vector&lt;string&gt;&amp; to) {
+        graph[from] = to;
+        for (const auto&amp; t : to) {
+            if (graph.find(t) == graph.end())
+                graph[t] = {};
+        }
+    }
+
+    void compute() {
+        int N = graph.size();
+        double initRank = 1.0 / N;
+        for (const auto&amp; [page, _] : graph)
+            rank[page] = initRank;
+
+        for (int i = 0; i &lt; ITERATIONS; ++i) {
+            unordered_map&lt;string, double&gt; newRank;
+            for (const auto&amp; [page, _] : graph)
+                newRank[page] = (1.0 - DAMPING) / N;
+
+            for (const auto&amp; [page, links] : graph) {
+                double share = rank[page] / links.size();
+                for (const auto&amp; dest : links)
+                    newRank[dest] += DAMPING * share;
+            }
+
+            double delta = 0;
+            for (const auto&amp; [page, val] : rank)
+                delta += abs(newRank[page] - val);
+
+            rank = newRank;
+            if (delta &lt; EPSILON)
+                break;
+        }
+    }
+
+    void printRanks() const {
+        cout &lt;&lt; fixed &lt;&lt; setprecision(5);
+        cout &lt;&lt; "Page Ranks:\n";
+        for (const auto&amp; [page, r] : rank)
+            cout &lt;&lt; page &lt;&lt; ": " &lt;&lt; r &lt;&lt; endl;
+    }
+};
+
+int main() {
+    PageRank pr;
+    pr.addPage("A", {"B", "C"});
+    pr.addPage("B", {"C"});
+    pr.addPage("C", {"A"});
+    pr.addPage("D", {"C"});
+
+    pr.compute();
+    pr.printRanks();
+
+    return 0;
+}
+  </code></pre>
+
+            <h2>📈 Time & Space Complexity</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Operation</th>
+                        <th>Time Complexity</th>
+                        <th>Space Complexity</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Build Graph</td>
+                        <td>O(E)</td>
+                        <td>O(N + E)</td>
+                    </tr>
+                    <tr>
+                        <td>PageRank Iteration</td>
+                        <td>O(I·(N + E))</td>
+                        <td>O(N)</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p><small>N = number of pages, E = number of links, I = number of iterations</small></p>
+            <h2>Inferences</h2>
+<p>PageRank Algorithm effectively captures the authority of a webpage by considering both the quantity and quality of incoming links. It enables scalable and reliable search result ranking, especially in large web graphs.</p>
+        </section>
+        <section id="case-study" style="margin-top: 2rem;">
+            <h1>3. Trending Topic Identification</h1>
+            <h2>🔍 Business Problem:</h2>
+            Given a stream of search queries over time, identify the fastest growing queries within a sliding time
+            window.</p>
+            <h2>🎯 Objective:</h2>
+  <p>To detect and highlight rapidly rising search queries in real-time using a sliding time window to capture trends promptly.</p>
+            <h2>3.1 Sliding Window</h2>
+            <p>Sliding windows efficiently capture recent data trends in real-time, allowing quick detection of rapidly growing
+                search queries while using limited memory.
+            </p>
+            <img alt="Article content" class="block w-full lazy-loaded" aria-busy="false"
+                src="https://media.licdn.com/dms/image/v2/D4D12AQH0H8lsCj4j_w/article-inline_image-shrink_1000_1488/article-inline_image-shrink_1000_1488/0/1711262197078?e=2147483647&amp;v=beta&amp;t=kA67bjC9VST0abgnwXMjo9lkVFMZCKVYhSm9H475NjM">
+            <h2>💻 Code</h2>
+            <pre><code class="language-cpp">
+#include &lt;iostream&gt;
+#include &lt;queue&gt;
+#include &lt;unordered_map&gt;
+#include &lt;deque&gt;
+#include &lt;vector&gt;
+#include &lt;string&gt;
+
+using namespace std;
+
+class TrendingQueries {
+    int window_size;
+    deque&lt;pair&lt;int, string&gt;&gt; events; // (timestamp, query)
+    unordered_map&lt;string, int&gt; freq; // current frequency
+    unordered_map&lt;string, int&gt; prev_freq; // frequency snapshot from previous check
+
+public:
+    TrendingQueries(int w) : window_size(w) {}
+
+    void evictOldEvents(int current_time) {
+        while (!events.empty() &amp;&amp; events.front().first &lt;= current_time - window_size) {
+            string query = events.front().second;
+            freq[query]--;
+            if (freq[query] == 0) freq.erase(query);
+            events.pop_front();
+        }
+    }
+
+    void addEvent(int timestamp, const string&amp; query) {
+        events.emplace_back(timestamp, query);
+        freq[query]++;
+        evictOldEvents(timestamp);
+    }
+
+    vector&lt;pair&lt;string, int&gt;&gt; getTrending(int top_k) {
+        priority_queue&lt;pair&lt;int, string&gt;&gt; maxHeap;
+        for (auto&amp; [query, curr_count] : freq) {
+            int prev_count = prev_freq.count(query) ? prev_freq[query] : 0;
+            int growth = curr_count - prev_count;
+            if (growth &gt; 0) maxHeap.emplace(growth, query);
+        }
+        prev_freq = freq; // update snapshot
+
+        vector&lt;pair&lt;string, int&gt;&gt; result;
+        for (int i = 0; i &lt; top_k &amp;&amp; !maxHeap.empty(); ++i) {
+            auto [growth, query] = maxHeap.top(); maxHeap.pop();
+            result.emplace_back(query, growth);
+        }
+        return result;
+    }
+};
+
+int main() {
+    TrendingQueries trending(10);
+    vector&lt;pair&lt;int, string&gt;&gt; data = {
+        {1, "python"}, {2, "java"}, {3, "python"}, {4, "c++"},
+        {12, "python"}, {13, "java"}, {14, "python"}, {15, "golang"},
+        {20, "java"}, {21, "java"}, {22, "python"}
+    };
+
+    for (auto&amp; [ts, query] : data) {
+        trending.addEvent(ts, query);
+        auto top_trends = trending.getTrending(3);
+        cout &lt;&lt; "At time " &lt;&lt; ts &lt;&lt; ", top trending:\n";
+        for (auto&amp; [q, g] : top_trends)
+            cout &lt;&lt; "  " &lt;&lt; q &lt;&lt; " with growth " &lt;&lt; g &lt;&lt; "\n";
+        cout &lt;&lt; endl;
+    }
+
+    return 0;
+}
+  </code></pre>
+
+            <h2>📈 Time & Space Complexity</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Operation</th>
+                        <th>Time Complexity</th>
+                        <th>Space Complexity</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Add Event</td>
+                        <td>O(1) amortized (deque &amp; map update)</td>
+                        <td>O(N) frequencies + O(W) events</td>
+                    </tr>
+                    <tr>
+                        <td>Evict Old Events</td>
+                        <td>O(k) per call, k = expired events</td>
+                        <td>—</td>
+                    </tr>
+                    <tr>
+                        <td>Get Trending (top k)</td>
+                        <td>O(N + k log N), N = distinct queries</td>
+                        <td>O(N) for frequency maps</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <p><small><strong>Legend:</strong> N = Number of distinct queries in sliding window<br>
+                    W = Number of events inside window<br>
+                    k = Number of top queries requested</small></p>
+            <h2>Inferences</h2>
+  <p>This approach enables timely identification of emerging interests, helping tailor content and ads dynamically. Efficient data structures like heaps or sliding window techniques ensure fast, memory-friendly processing of large query streams.</p>
+<h2>
+    <a href="/Services/references.html" style="text-decoration: none; color: inherit;">
+        Click here for References
+    </a>
+</h2>
+        </section>
+
+    </main>
+
+</body>
+
+</html>
